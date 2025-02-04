@@ -1,11 +1,77 @@
 import jax.numpy as jnp
 from jax import lax
 from jax.scipy.special import logsumexp
+import numpy as np
 
 import numpyro.distributions as distfn
 from numpyro.distributions import constraints
 from numpyro.distributions.util import promote_shapes,validate_sample
 
+
+class Keplerian_Prior(distfn.Distribution):
+    # support = constraints.interval(0.25,3.0)
+
+    arg_constraints = {"low": constraints.dependent, "high": constraints.dependent}
+    reparametrized_params = ["low", "high"]
+
+
+    def __init__(self, q_low=0.01, q_high=1.0, q=0.5, v1=2.3, v2=1.3, tolerance=1e-5, validate_args=None):
+        """
+        q \propto v_1 / v_2
+        ----------
+
+        alpha_low : float, optional
+            Power-law slope for the low-mass component of the IMF.
+            Default is `1.3`.
+        alpha_high : float, optional
+            Power-law slope for the high-mass component of the IMF.
+            Default is `2.3`.
+        mass_break : float, optional
+            The mass where we transition from `alpha_low` to `alpha_high`.
+            Default is `0.5`.
+        """
+        # self.mass = mass
+        self.q_low, self.q_high = promote_shapes(q_low, q_high)
+        batch_shape = lax.broadcast_shapes(jnp.shape(q_low), jnp.shape(q_high))
+        self._support = constraints.interval(q_low, q_high)
+        # super().__init__(batch_shape = (), event_shape=())
+        super().__init__(batch_shape, validate_args=validate_args)
+        
+        self.q = q
+        self.v1 = v1
+        self.v2 = v2
+
+        # Check if q propto v1/v2
+        np.absolute(q - v1/v2) < tolerance
+
+
+    @constraints.dependent_property(is_discrete=False, event_dim=0)
+    def support(self):
+        return self._support
+        
+    def sample(self, key, sample_shape=()):
+        raise NotImplementedError
+       
+    @validate_sample      
+    def log_prob(self, mass):
+        """
+        mgrid : `~numpy.ndarray` of shape (Ngrid)
+            Grid of initial mass (solar units) the IMF will be evaluated over.
+        Returns
+        -------
+        lnprior : `~numpy.ndarray` of shape (Ngrid)
+            The corresponding unnormalized ln(prior).
+        """
+
+        def lnprior_high(mass):
+            return (-self.alpha_high * jnp.log(mass) 
+                + (self.alpha_high - self.alpha_low) * jnp.log(self.mass_break))
+        def lnprior_low(mass):
+            return -self.alpha_low * jnp.log(mass)
+
+        lnprior = lax.cond(mass > self.mass_break,lnprior_high,lnprior_low,mass)
+
+        return lnprior - self.lognorm
 
 class IMF_Prior(distfn.Distribution):
     # support = constraints.interval(0.25,3.0)
@@ -14,7 +80,7 @@ class IMF_Prior(distfn.Distribution):
     reparametrized_params = ["low", "high"]
 
 
-    def __init__(self,low=0.25, high=3.0, alpha_low=1.3, alpha_high=2.3, mass_break=0.5, validate_args=None):
+    def __init__(self, low=0.25, high=3.0, alpha_low=1.3, alpha_high=2.3, mass_break=0.5, validate_args=None):
         """
         Apply a Kroupa-like broken IMF prior over the provided initial mass grid.
         Parameters
