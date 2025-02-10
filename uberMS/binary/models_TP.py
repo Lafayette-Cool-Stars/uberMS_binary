@@ -46,20 +46,18 @@ def model_specphot(
     sampledpars = ([
         "specjitter",
         "photjitter",
-        # "Teff_p",
-        # "Teff_s",
-        # "log(g)_p",
-        # "log(g)_s",
-        "vrad_p",
-        "vrad_s",
+        # "Teff_a",
+        # "Teff_b",
+        # "log(g)_a",
+        # "log(g)_b",
+        "vrad_a",
+        "vrad_b",
         'vrad_sys',
-        "vstar_p",
-        "vstar_s",
-        'log(R)_p',
-        'log(R)_s',
+        "vstar_a",
+        "vstar_b",
+        'log(R)_a',
+        'log(R)_b',
         'q',
-        'v_p',
-        'v_s',
         "dist",
         "Av",
         ])
@@ -72,37 +70,37 @@ def model_specphot(
             sample_i[pp] = defaultprior(pp)
 
     # define the primary as the hotter of the two stars
-    sample_i['Teff_p'] = numpyro.sample("Teff_p",distfn.Uniform(2500.0, 10000.0))
-    sample_i['Teff_s'] = numpyro.sample("Teff_s",distfn.Uniform(2500.0, sample_i['Teff_p']))
-    # sample_i['Teff_s'] = numpyro.sample("Teff_s",distfn.Uniform(2500.0, 10000.0))
+    sample_i['Teff_a'] = numpyro.sample("Teff_a",distfn.Uniform(2500.0, 10000.0))
+    sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, sample_i['Teff_a']))
+    # sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, 10000.0))
 
-    sample_i['log(g)_p'] = numpyro.sample("log(g)_p",distfn.Uniform(0.0, 5.5))
-    # sample_i['log(g)_s'] = numpyro.sample("log(g)_s",distfn.Uniform(sample_i['log(g)_p'],5.5))
-    sample_i['log(g)_s'] = numpyro.sample("log(g)_s",distfn.Uniform(0.0,5.5))
+    sample_i['log(g)_a'] = numpyro.sample("log(g)_a",distfn.Uniform(0.0, 5.5))
+    # sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(sample_i['log(g)_a'],5.5))
+    sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(0.0,5.5))
 
     # Mass ratio and velocity priors
     # Based on the equation q = (v_b - vrad_sys) / (vrad_sys - v_a),
     # which can be solved v_b to give: v_b = q * (vrad_sys - v_a) + vrad_sys
-    q = sample_i['q'] = numpyro.sample("q", distfn.Uniform(1e-5, 1.0))
+    sample_i['q'] = numpyro.sample("q", distfn.Uniform(1e-5, 1.0))
 
     # Keeping this as just a uniform prior between +/- 500
     # TODO: Need to figure out how Phill did the vrad priors in smes
-    vrad_sys = sample_i['vrad_sys'] = numpyro.sample("vrad_sys", 
+    sample_i['vrad_sys'] = numpyro.sample("vrad_sys", 
                                           distfn.Uniform(-500.0, 500.0))
     
-    v_a = sample_i['v_a'] = numpyro.sample("v_a", 
+    sample_i['v_a'] = numpyro.sample("v_a", 
                                           distfn.Uniform(-500.0, 500.0))
     
-    v_b = sample_i['v_b'] = numpyro.deterministic("v_b", 
-                                            q * (vrad_sys - v_a) + vrad_sys)
+    sample_i['v_b'] = numpyro.deterministic("v_b", 
+                                            sample_i['q'] * (sample_i['vrad_sys'] - sample_i['v_a']) + sample_i['vrad_sys'])
 
-    # require that |vrad_p - vrad_s| > 1.0
+    # require that |vrad_a - vrad_b| > 1.0
     # mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
     # component_dists = ([
-    #     distfn.Uniform(sample_i['vrad_p']-100.0,sample_i['vrad_p']-1.0,),
-    #     distfn.Uniform(sample_i['vrad_p']+1.0,sample_i['vrad_p']+100.0,),
+    #     distfn.Uniform(sample_i['vrad_a']-100.0,sample_i['vrad_a']-1.0,),
+    #     distfn.Uniform(sample_i['vrad_a']+1.0,sample_i['vrad_a']+100.0,),
     #     ])
-    # sample_i['vrad_s'] = numpyro.sample('vrad_s',distfn.MixtureGeneral(mixing_dist, component_dists))
+    # sample_i['vrad_b'] = numpyro.sample('vrad_b',distfn.MixtureGeneral(mixing_dist, component_dists))
     
     # figure out if user defines extra pc terms in priors
     # or should use the default pc0-pc3 terms
@@ -121,17 +119,17 @@ def model_specphot(
 
     # set vmic only if included in NNs
     if vmicbool:
-        if 'vmic_p' in priors.keys():
-            sample_i['vmic_p'] = determineprior('vmic_p',priors['vmic_p'])
+        if 'vmic_a' in priors.keys():
+            sample_i['vmic_a'] = determineprior('vmic_a',priors['vmic_a'])
         else:
-            sample_i['vmic_p'] = defaultprior('vmic_p')
-        if 'vmic_s' in priors.keys():
-            sample_i['vmic_s'] = determineprior('vmic_s',priors['vmic_s'])
+            sample_i['vmic_a'] = defaultprior('vmic_a')
+        if 'vmic_b' in priors.keys():
+            sample_i['vmic_b'] = determineprior('vmic_b',priors['vmic_b'])
         else:
-            sample_i['vmic_s'] = defaultprior('vmic_s')
+            sample_i['vmic_b'] = defaultprior('vmic_b')
     else:
-        sample_i['vmic_p'] = 1.0
-        sample_i['vmic_s'] = 1.0
+        sample_i['vmic_a'] = 1.0
+        sample_i['vmic_b'] = 1.0
 
     # handle various lsf cases
     if 'lsf_array' in priors.keys():
@@ -147,9 +145,9 @@ def model_specphot(
 
     # handle different cases for the treatment of [Fe/H] and [a/Fe]
     if 'binchem' in priors.keys():
-        (sample_i["[Fe/H]_p"],sample_i["[Fe/H]_s"],sample_i["[a/Fe]_p"],sample_i["[a/Fe]_s"]) = determineprior(None,priors['binchem'])
+        (sample_i["[Fe/H]_a"],sample_i["[Fe/H]_b"],sample_i["[a/Fe]_a"],sample_i["[a/Fe]_b"]) = determineprior(None,priors['binchem'])
     else:
-        for pp in ["[Fe/H]_p","[Fe/H]_s","[a/Fe]_p","[a/Fe]_s"]:  
+        for pp in ["[Fe/H]_a","[Fe/H]_b","[a/Fe]_a","[a/Fe]_b"]:  
             if pp in priors.keys():
                 sample_i[pp] = determineprior(pp,priors[pp])
             else:
@@ -159,28 +157,28 @@ def model_specphot(
     specsig = jnp.sqrt( (specobserr**2.0) + (sample_i['specjitter']**2.0) )
 
     # make the spectral prediciton
-    specpars_p = ([
-        sample_i['Teff_p'],sample_i['log(g)_p'],sample_i['[Fe/H]_p'],sample_i['[a/Fe]_p'],
-        sample_i['vrad_p'],sample_i['vstar_p'],sample_i['vmic_p'],sample_i['lsf']])
-    specpars_p += [sample_i['pc{0}'.format(x)] for x in range(len(pcterms))]
-    specmod_p = genspecfn(specpars_p,outwave=specwave,modpoly=True)
-    specmod_p = jnp.asarray(specmod_p[1])
+    specpars_a = ([
+        sample_i['Teff_a'],sample_i['log(g)_a'],sample_i['[Fe/H]_a'],sample_i['[a/Fe]_a'],
+        sample_i['vrad_a'],sample_i['vstar_a'],sample_i['vmic_a'],sample_i['lsf']])
+    specpars_a += [sample_i['pc{0}'.format(x)] for x in range(len(pcterms))]
+    specmod_a = genspecfn(specpars_a,outwave=specwave,modpoly=True)
+    specmod_a = jnp.asarray(specmod_a[1])
 
-    specpars_s = ([
-        sample_i['Teff_s'],sample_i['log(g)_s'],sample_i['[Fe/H]_s'],sample_i['[a/Fe]_s'],
-        sample_i['vrad_s'],sample_i['vstar_s'],sample_i['vmic_s'],sample_i['lsf']])
-    specpars_s += [1.0,0.0]
-    specmod_s = genspecfn(specpars_s,outwave=specwave,modpoly=True)
-    specmod_s = jnp.asarray(specmod_s[1])
+    specpars_b = ([
+        sample_i['Teff_b'],sample_i['log(g)_b'],sample_i['[Fe/H]_b'],sample_i['[a/Fe]_b'],
+        sample_i['vrad_b'],sample_i['vstar_b'],sample_i['vmic_b'],sample_i['lsf']])
+    specpars_b += [1.0,0.0]
+    specmod_b = genspecfn(specpars_b,outwave=specwave,modpoly=True)
+    specmod_b = jnp.asarray(specmod_b[1])
 
-    radius_p = 10.0**sample_i['log(R)_p']
-    radius_s = 10.0**sample_i['log(R)_s']
+    radius_a = 10.0**sample_i['log(R)_a']
+    radius_b = 10.0**sample_i['log(R)_b']
 
     R = (
-        (planck(specwave,sample_i['Teff_p']) * radius_p**2.0) / 
-        (planck(specwave,sample_i['Teff_s']) * radius_s**2.0)
+        (planck(specwave,sample_i['Teff_a']) * radius_a**2.0) / 
+        (planck(specwave,sample_i['Teff_b']) * radius_b**2.0)
          )
-    specmod_est = (specmod_p + R * specmod_s) / (1.0 + R)
+    specmod_est = (specmod_a + R * specmod_b) / (1.0 + R)
 
     # calculate likelihood for spectrum
     numpyro.sample("specobs",distfn.Normal(specmod_est, specsig), obs=specobs)
@@ -189,21 +187,21 @@ def model_specphot(
     photsig = jnp.sqrt( (photobserr**2.0) + (sample_i['photjitter']**2.0) )
 
     # make photometry prediction
-    photpars_p = ([
-        sample_i['Teff_p'],sample_i['log(g)_p'],sample_i['[Fe/H]_p'],sample_i['[a/Fe]_p'],
-        sample_i['log(R)_p'],sample_i['dist'],sample_i['Av'],3.1])
-    photmod_p = genphotfn(photpars_p)
-    photmod_p = [photmod_p[xx] for xx in filtarray]
+    photpars_a = ([
+        sample_i['Teff_a'],sample_i['log(g)_a'],sample_i['[Fe/H]_a'],sample_i['[a/Fe]_a'],
+        sample_i['log(R)_a'],sample_i['dist'],sample_i['Av'],3.1])
+    photmod_a = genphotfn(photpars_a)
+    photmod_a = [photmod_a[xx] for xx in filtarray]
 
-    photpars_s = ([
-        sample_i['Teff_s'],sample_i['log(g)_s'],sample_i['[Fe/H]_s'],sample_i['[a/Fe]_s'],
-        sample_i['log(R)_s'],sample_i['dist'],sample_i['Av'],3.1])
-    photmod_s = genphotfn(photpars_s)
-    photmod_s = [photmod_s[xx] for xx in filtarray]
+    photpars_b = ([
+        sample_i['Teff_b'],sample_i['log(g)_b'],sample_i['[Fe/H]_b'],sample_i['[a/Fe]_b'],
+        sample_i['log(R)_b'],sample_i['dist'],sample_i['Av'],3.1])
+    photmod_b = genphotfn(photpars_b)
+    photmod_b = [photmod_b[xx] for xx in filtarray]
 
     photmod_est = (
-        [-2.5 * jnp.log10( 10.0**(-0.4 * m_p) + 10.0**(-0.4 * m_s) )
-         for m_p,m_s in zip(photmod_p,photmod_s)
+        [-2.5 * jnp.log10( 10.0**(-0.4 * m_a) + 10.0**(-0.4 * m_b) )
+         for m_a,m_b in zip(photmod_a,photmod_b)
          ] 
     )
     photmod_est = jnp.asarray(photmod_est)
@@ -237,16 +235,16 @@ def model_spec(
 
     sampledpars = ([
         "specjitter",
-        # "Teff_p",
-        # "Teff_s",
-        # "log(g)_p",
-        # "log(g)_s",
-        "vrad_p",
-        # "vrad_s",
-        "vstar_p",
-        "vstar_s",
-        "log(R)_p",
-        "log(R)_s",        
+        # "Teff_a",
+        # "Teff_b",
+        # "log(g)_a",
+        # "log(g)_b",
+        "vrad_a",
+        # "vrad_b",
+        "vstar_a",
+        "vstar_b",
+        "log(R)_a",
+        "log(R)_b",        
         ])
 
     sample_i = {}
@@ -257,20 +255,20 @@ def model_spec(
             sample_i[pp] = defaultprior(pp)
 
     # define the primary as the hotter of the two stars
-    sample_i['Teff_p'] = numpyro.sample("Teff_p",distfn.Uniform(2500.0, 10000.0))
-    sample_i['Teff_s'] = numpyro.sample("Teff_s",distfn.Uniform(2500.0, sample_i['Teff_p']))
+    sample_i['Teff_a'] = numpyro.sample("Teff_a",distfn.Uniform(2500.0, 10000.0))
+    sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, sample_i['Teff_a']))
 
-    sample_i['log(g)_p'] = numpyro.sample("log(g)_p",distfn.Uniform(0.0, 5.5))
-    # sample_i['log(g)_s'] = numpyro.sample("log(g)_s",distfn.Uniform(sample_i['log(g)_p'],5.5))
-    sample_i['log(g)_s'] = numpyro.sample("log(g)_s",distfn.Uniform(0.0,5.5))
+    sample_i['log(g)_a'] = numpyro.sample("log(g)_a",distfn.Uniform(0.0, 5.5))
+    # sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(sample_i['log(g)_a'],5.5))
+    sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(0.0,5.5))
 
-    # require that |vrad_p - vrad_s| > 1.0
+    # require that |vrad_a - vrad_b| > 1.0
     mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
     component_dists = ([
-        distfn.Uniform(sample_i['vrad_p']-100.0,sample_i['vrad_p']-1.0,),
-        distfn.Uniform(sample_i['vrad_p']+1.0,sample_i['vrad_p']+100.0,),
+        distfn.Uniform(sample_i['vrad_a']-100.0,sample_i['vrad_a']-1.0,),
+        distfn.Uniform(sample_i['vrad_a']+1.0,sample_i['vrad_a']+100.0,),
         ])
-    sample_i['vrad_s'] = numpyro.sample('vrad_s',distfn.MixtureGeneral(mixing_dist, component_dists))
+    sample_i['vrad_b'] = numpyro.sample('vrad_b',distfn.MixtureGeneral(mixing_dist, component_dists))
     
     # figure out if user defines extra pc terms in priors
     # or should use the default pc0-pc3 terms
@@ -289,17 +287,17 @@ def model_spec(
 
     # set vmic only if included in NNs
     if vmicbool:
-        if 'vmic_p' in priors.keys():
-            sample_i['vmic_p'] = determineprior('vmic_p',priors['vmic_p'])
+        if 'vmic_a' in priors.keys():
+            sample_i['vmic_a'] = determineprior('vmic_a',priors['vmic_a'])
         else:
-            sample_i['vmic_p'] = defaultprior('vmic_p')
-        if 'vmic_s' in priors.keys():
-            sample_i['vmic_s'] = determineprior('vmic_s',priors['vmic_s'])
+            sample_i['vmic_a'] = defaultprior('vmic_a')
+        if 'vmic_b' in priors.keys():
+            sample_i['vmic_b'] = determineprior('vmic_b',priors['vmic_b'])
         else:
-            sample_i['vmic_s'] = defaultprior('vmic_s')
+            sample_i['vmic_b'] = defaultprior('vmic_b')
     else:
-        sample_i['vmic_p'] = 1.0
-        sample_i['vmic_s'] = 1.0
+        sample_i['vmic_a'] = 1.0
+        sample_i['vmic_b'] = 1.0
 
     # handle various lsf cases
     if 'lsf_array' in priors.keys():
@@ -315,9 +313,9 @@ def model_spec(
 
     # handle different cases for the treatment of [Fe/H] and [a/Fe]
     if 'binchem' in priors.keys():
-        (sample_i["[Fe/H]_p"],sample_i["[Fe/H]_s"],sample_i["[a/Fe]_p"],sample_i["[a/Fe]_s"]) = determineprior(None,priors['binchem'])
+        (sample_i["[Fe/H]_a"],sample_i["[Fe/H]_b"],sample_i["[a/Fe]_a"],sample_i["[a/Fe]_b"]) = determineprior(None,priors['binchem'])
     else:
-        for pp in ["[Fe/H]_p","[Fe/H]_s","[a/Fe]_p","[a/Fe]_s"]:  
+        for pp in ["[Fe/H]_a","[Fe/H]_b","[a/Fe]_a","[a/Fe]_b"]:  
             if pp in priors.keys():
                 sample_i[pp] = determineprior(pp,priors[pp])
             else:
@@ -327,28 +325,28 @@ def model_spec(
     specsig = jnp.sqrt( (specobserr**2.0) + (sample_i['specjitter']**2.0) )
 
     # make the spectral prediciton
-    specpars_p = ([
-        sample_i['Teff_p'],sample_i['log(g)_p'],sample_i['[Fe/H]_p'],sample_i['[a/Fe]_p'],
-        sample_i['vrad_p'],sample_i['vstar_p'],sample_i['vmic_p'],sample_i['lsf']])
-    specpars_p += [sample_i['pc{0}'.format(x)] for x in range(len(pcterms))]
-    specmod_p = genspecfn(specpars_p,outwave=specwave,modpoly=True)
-    specmod_p = jnp.asarray(specmod_p[1])
+    specpars_a = ([
+        sample_i['Teff_a'],sample_i['log(g)_a'],sample_i['[Fe/H]_a'],sample_i['[a/Fe]_a'],
+        sample_i['vrad_a'],sample_i['vstar_a'],sample_i['vmic_a'],sample_i['lsf']])
+    specpars_a += [sample_i['pc{0}'.format(x)] for x in range(len(pcterms))]
+    specmod_a = genspecfn(specpars_a,outwave=specwave,modpoly=True)
+    specmod_a = jnp.asarray(specmod_a[1])
 
-    specpars_s = ([
-        sample_i['Teff_s'],sample_i['log(g)_s'],sample_i['[Fe/H]_s'],sample_i['[a/Fe]_s'],
-        sample_i['vrad_s'],sample_i['vstar_s'],sample_i['vmic_s'],sample_i['lsf']])
-    specpars_s += [1.0,0.0]
-    specmod_s = genspecfn(specpars_s,outwave=specwave,modpoly=True)
-    specmod_s = jnp.asarray(specmod_s[1])
+    specpars_b = ([
+        sample_i['Teff_b'],sample_i['log(g)_b'],sample_i['[Fe/H]_b'],sample_i['[a/Fe]_b'],
+        sample_i['vrad_b'],sample_i['vstar_b'],sample_i['vmic_b'],sample_i['lsf']])
+    specpars_b += [1.0,0.0]
+    specmod_b = genspecfn(specpars_b,outwave=specwave,modpoly=True)
+    specmod_b = jnp.asarray(specmod_b[1])
 
-    radius_p = 10.0**sample_i['log(R)_p']
-    radius_s = 10.0**sample_i['log(R)_s']
+    radius_a = 10.0**sample_i['log(R)_a']
+    radius_b = 10.0**sample_i['log(R)_b']
 
     R = (
-        (planck(specwave,sample_i['Teff_p']) * radius_p**2.0) / 
-        (planck(specwave,sample_i['Teff_s']) * radius_s**2.0)
+        (planck(specwave,sample_i['Teff_a']) * radius_a**2.0) / 
+        (planck(specwave,sample_i['Teff_b']) * radius_b**2.0)
          )
-    specmod_est = (specmod_p + R * specmod_s) / (1.0 + R)
+    specmod_est = (specmod_a + R * specmod_b) / (1.0 + R)
 
     # calculate likelihood for spectrum
     numpyro.sample("specobs",distfn.Normal(specmod_est, specsig), obs=specobs)
@@ -391,31 +389,31 @@ def model_phot(
         else:
             sample_i[pp] = defaultprior(pp)
 
-    teffs_p = -3.58 * (10**-5) * (sample_i['Teffp']**2.0) + 0.751 * sample_i['Teffp'] + 808.0
+    teffs_a = -3.58 * (10**-5) * (sample_i['Teffp']**2.0) + 0.751 * sample_i['Teffp'] + 808.0
     sample_i['Teffs'] = numpyro.sample(
         "Teffs",
-        distfn.TruncatedDistribution(distfn.Normal(loc=teffs_p,scale=250.0),
-                                     low=teffs_p-500.0,high=teffs_p+500.0))
+        distfn.TruncatedDistribution(distfn.Normal(loc=teffs_a,scale=250.0),
+                                     low=teffs_a-500.0,high=teffs_a+500.0))
 
     # sample in jitter term for error in photometry
     photsig = jnp.sqrt( (photobserr**2.0) + (sample_i['photjitter']**2.0) )
 
     # make photometry prediction
-    photpars_p = ([
+    photpars_a = ([
         sample_i['Teffp'],sample_i['log(g)'],sample_i['[Fe/H]'],sample_i['[a/Fe]'],
         sample_i['log(R)'],sample_i['dist'],sample_i['Av'],3.1])
-    photmod_p = genphotfn(photpars_p)
-    photmod_p = [photmod_p[xx] for xx in filtarray]
+    photmod_a = genphotfn(photpars_a)
+    photmod_a = [photmod_a[xx] for xx in filtarray]
 
-    photpars_s = ([
+    photpars_b = ([
         sample_i['Teffs'],sample_i['log(g)'],sample_i['[Fe/H]'],sample_i['[a/Fe]'],
         sample_i['log(R)'],sample_i['dist'],sample_i['Av'],3.1])
-    photmod_s = genphotfn(photpars_s)
-    photmod_s = [photmod_s[xx] for xx in filtarray]
+    photmod_b = genphotfn(photpars_b)
+    photmod_b = [photmod_b[xx] for xx in filtarray]
 
     photmod_est = (
-        [-2.5 * jnp.log10( (1.0-sample_i['ff']) * 10.0**(-0.4 * m_p) + sample_i['ff'] * 10.0**(-0.4 * m_s) )
-         for m_p,m_s in zip(photmod_p,photmod_s)
+        [-2.5 * jnp.log10( (1.0-sample_i['ff']) * 10.0**(-0.4 * m_a) + sample_i['ff'] * 10.0**(-0.4 * m_b) )
+         for m_a,m_b in zip(photmod_a,photmod_b)
          ] 
     )
     photmod_est = jnp.asarray(photmod_est)

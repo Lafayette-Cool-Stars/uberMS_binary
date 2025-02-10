@@ -44,12 +44,10 @@ def defaultprior(parname):
     if "log(R)" in parname:
         return numpyro.sample(parname, distfn.Uniform(-2,3.0))  
     
-    # Keplerian Priors
-    if "q" in parname:
-        return numpyro.sample(parname, distfn.Uniform(0.0, 1.0))
-    if "v_p" in parname:
-        return numpyro.sample(parname, distfn.Uniform(-500.0, 500.0))
-
+    if parname == "q":
+        return numpyro.sample("q", distfn.Uniform(1e-5, 1.0))
+    if parname == "v_a":
+        return  numpyro.sample("v_a", distfn.Uniform(-500.0, 500.0))
 
     if parname == "Av":
         return numpyro.sample("Av", distfn.Uniform(1E-6,5.0))
@@ -108,7 +106,7 @@ def determineprior(parname,priorinfo):
         specindex = parname.split('_')[-1]
         return jnp.asarray(priorinfo[0]) * numpyro.sample(
             "lsf_scaling_{}".format(specindex),distfn.Uniform(*priorinfo[1]))
-
+    
     # define user defined priors
 
     # standard prior distributions
