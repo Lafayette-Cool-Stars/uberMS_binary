@@ -57,7 +57,7 @@ def model_specphot(
         "vstar_b",
         'log(R)_a',
         'log(R)_b',
-        'q',
+        'mass_ratio',
         "dist",
         "Av",
         ])
@@ -81,7 +81,7 @@ def model_specphot(
     # Mass ratio and velocity priors
     # Based on the equation q = (v_a - vrad_sys) / (vrad_sys - v_b),
     # which can be solved v_b to give: v_b = vrad_sys - (v_a - vrad_sys)/q
-    sample_i['q'] = numpyro.sample("q", distfn.Uniform(1e-5, 1.0))
+    sample_i['mass_ratio'] = numpyro.sample("mass_ratio", distfn.Uniform(1e-5, 1.0))
 
     # Keeping this as just a uniform prior between +/- 500
     # TODO: Need to figure out how Phill did the vrad priors in smes
@@ -94,7 +94,7 @@ def model_specphot(
                                           distfn.Uniform(-500.0, 500.0))
     
     sample_i['v_b'] = numpyro.deterministic("v_b", 
-                                            sample_i['vrad_sys'] - (sample_i['v_a'] - sample_i['vrad_sys'])/(sample_i['q']))
+                                            sample_i['vrad_sys'] - (sample_i['v_a'] - sample_i['vrad_sys'])/(sample_i['mass_ratio']))
 
     # require that |vrad_a - vrad_b| > 1.0
     # mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
