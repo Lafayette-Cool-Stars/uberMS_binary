@@ -332,7 +332,7 @@ class sviTP(object):
             print('NN-type: {}'.format(self.NNtype))
 
     def run(self,indict):
-
+        # Run in TP mode
         starttime = datetime.now()
 
         # break out parts on input dict

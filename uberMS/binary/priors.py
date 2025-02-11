@@ -60,8 +60,8 @@ def defaultprior(parname):
 def determineprior(parname,priorinfo):
     # advanced priors
     if (priorinfo[0] is "keplerian"):
-        v_p_le, v_p_ue = priorinfo[1]['v_p_le'],priorinfo[1]['v_p_ue']
-        return numpyro.sample("v_p", distfn.Uniform(v_p_le, v_p_ue))
+        v_a_le, v_a_ue = priorinfo[1]['v_a_le'],priorinfo[1]['v_a_ue']
+        return numpyro.sample("v_a", distfn.Uniform(v_a_le, v_a_ue))
 
     if (priorinfo[0] is 'IMF'):
         mass_le,mass_ue = priorinfo[1]['mass_le'],priorinfo[1]['mass_ue']
@@ -79,27 +79,27 @@ def determineprior(parname,priorinfo):
     if (priorinfo[0] is 'binchem'):
         # last option is both stars have same FeH and aFe (this is the default)
         if priorinfo[1][0] == 'normal':
-            feh_p = numpyro.sample('[Fe/H]_p',distfn.Uniform(-4.0,0.5))
-            feh_s = numpyro.sample('[Fe/H]_s',distfn.Normal(feh_p,priorinfo[1][1]))
-            afe_p = numpyro.sample('[a/Fe]_p',distfn.Uniform(-0.2,0.6))
-            afe_s = numpyro.sample('[a/Fe]_s',distfn.Normal(afe_p,priorinfo[1][1]))
-            return (feh_p,feh_s,afe_p,afe_s)
+            feh_a = numpyro.sample('[Fe/H]_a',distfn.Uniform(-4.0,0.5))
+            feh_b = numpyro.sample('[Fe/H]_b',distfn.Normal(feh_a,priorinfo[1][1]))
+            afe_a = numpyro.sample('[a/Fe]_a',distfn.Uniform(-0.2,0.6))
+            afe_b = numpyro.sample('[a/Fe]_b',distfn.Normal(afe_a,priorinfo[1][1]))
+            return (feh_a,feh_b,afe_a,afe_b)
 
         elif priorinfo[1][0] == 'uniform':
-            feh_p = numpyro.sample('[Fe/H]_p',distfn.Uniform(-4.0,0.5))
-            feh_s = numpyro.sample('[Fe/H]_s',distfn.Uniform(
-                feh_p-priorinfo[1][1],feh_p+priorinfo[1][1]))
-            afe_p = numpyro.sample('[a/Fe]_p',distfn.Uniform(-0.2,0.6))
-            afe_s = numpyro.sample('[a/Fe]_s',distfn.Uniform(
-                afe_p-priorinfo[1][1],afe_p+priorinfo[1][1]))
-            return (feh_p,feh_s,afe_p,afe_s)
+            feh_a = numpyro.sample('[Fe/H]_a',distfn.Uniform(-4.0,0.5))
+            feh_b = numpyro.sample('[Fe/H]_b',distfn.Uniform(
+                feh_a-priorinfo[1][1],feh_a+priorinfo[1][1]))
+            afe_a = numpyro.sample('[a/Fe]_a',distfn.Uniform(-0.2,0.6))
+            afe_b = numpyro.sample('[a/Fe]_b',distfn.Uniform(
+                afe_a-priorinfo[1][1],afe_a+priorinfo[1][1]))
+            return (feh_a,feh_b,afe_a,afe_b)
 
         else:
-            feh_p = numpyro.sample('[Fe/H]_p',distfn.Uniform(-4.0,0.5))
-            feh_s = numpyro.deterministic('[Fe/H]_s',feh_p)
-            afe_p = numpyro.sample('[a/Fe]_p',distfn.Uniform(-0.2,0.6))
-            afe_s = numpyro.deterministic('[a/Fe]_s',afe_p)
-            return (feh_p,feh_s,afe_p,afe_s)
+            feh_a = numpyro.sample('[Fe/H]_a',distfn.Uniform(-4.0,0.5))
+            feh_b = numpyro.deterministic('[Fe/H]_b',feh_a)
+            afe_a = numpyro.sample('[a/Fe]_a',distfn.Uniform(-0.2,0.6))
+            afe_b = numpyro.deterministic('[a/Fe]_b',afe_a)
+            return (feh_a,feh_b,afe_a,afe_b)
 
     # handle lsf properly
     if "lsf_array" in parname:
