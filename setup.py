@@ -15,16 +15,17 @@ except ImportError:
 
 
 setup(
-    name="uberMS",
-    url="https://github.com/pcargile/uberMS",
+    name="uberMS_binary",
+    url="https://github.com/Lafayette-Cool-Stars/uberMS_binary",
     version="0.0",
     author="Phillip Cargile",
     author_email="pcargile@cfa.harvard.edu",
-    packages=["uberMS",
-              "uberMS.spots",
-              "uberMS.dva",
-              "uberMS.smes",
-              "uberMS.utils"],
+    packages=["uberMS_binary",
+	      "uberMS_binary.binary",
+              "uberMS_binary.spots",
+              "uberMS_binary.dva",
+              "uberMS_binary.smes",
+              "uberMS_binary.utils"],
     license="LICENSE",
     description="Optimized MINESweeper",
     long_description=open("README.md").read(),
@@ -44,7 +45,7 @@ from . import dva
 from . import utils"""
 )
 
-with open('uberMS/__init__.py','w') as ff:
+with open('uberMS_binary/__init__.py','w') as ff:
   ff.write(toplevelstr)
   ff.write('\n')
   ff.write("""__abspath__ = '{0}/'\n""".format(os.getcwd()))
