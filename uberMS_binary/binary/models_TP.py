@@ -59,7 +59,7 @@ def model_specphot(
         'log(R)_b',
         'mass_ratio',
         "dist",
-        "Av",
+        "Av"
         ])
 
     sample_i = {}
@@ -93,8 +93,11 @@ def model_specphot(
     sample_i['v_a'] = numpyro.sample("v_a", 
                                           distfn.Uniform(-500.0, 500.0))
     
-    sample_i['v_b'] = numpyro.deterministic("v_b", 
-                                            sample_i['vrad_sys'] - (sample_i['v_a'] - sample_i['vrad_sys'])/(sample_i['mass_ratio']))
+    sample_i['v_a'] = numpyro.sample("v_b",
+                                          distfn.Uniform(-500.0, 500.0))
+
+    # sample_i['v_b'] = numpyro.deterministic("v_b", 
+    #                                        sample_i['vrad_sys'] - (sample_i['v_a'] - sample_i['vrad_sys'])/(sample_i['mass_ratio']))
 
     # require that |vrad_a - vrad_b| > 1.0
     # mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)

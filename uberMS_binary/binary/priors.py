@@ -44,8 +44,8 @@ def defaultprior(parname):
     if "log(R)" in parname:
         return numpyro.sample(parname, distfn.Uniform(-2,3.0))  
     
-    if parname == "q":
-        return numpyro.sample("q", distfn.Uniform(1e-5, 1.0))
+    if parname == "mass_ratio":
+        return numpyro.sample("mass_ratio", distfn.Uniform(1e-5, 1.0))
     if parname == "v_a":
         return  numpyro.sample("v_a", distfn.Uniform(-500.0, 500.0))
 
