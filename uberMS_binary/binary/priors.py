@@ -46,8 +46,8 @@ def defaultprior(parname):
     
     if parname == "mass_ratio":
         return numpyro.sample("mass_ratio", distfn.Uniform(1e-5, 1.0))
-    if parname == "v_a":
-        return  numpyro.sample("v_a", distfn.Uniform(-500.0, 500.0))
+    # if parname == "v_a":
+    #    return  numpyro.sample("v_a", distfn.Uniform(-500.0, 500.0))
 
     if parname == "Av":
         return numpyro.sample("Av", distfn.Uniform(1E-6,5.0))
@@ -59,9 +59,9 @@ def defaultprior(parname):
 
 def determineprior(parname,priorinfo):
     # advanced priors
-    if (priorinfo[0] is "keplerian"):
-        v_a_le, v_a_ue = priorinfo[1]['v_a_le'],priorinfo[1]['v_a_ue']
-        return numpyro.sample("v_a", distfn.Uniform(v_a_le, v_a_ue))
+    #if (priorinfo[0] is "keplerian"):
+    #    v_a_le, v_a_ue = priorinfo[1]['v_a_le'],priorinfo[1]['v_a_ue']
+    #    return numpyro.sample("v_a", distfn.Uniform(v_a_le, v_a_ue))
 
     if (priorinfo[0] is 'IMF'):
         mass_le,mass_ue = priorinfo[1]['mass_le'],priorinfo[1]['mass_ue']

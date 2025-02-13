@@ -50,14 +50,14 @@ def model_specphot(
         # "Teff_b",
         # "log(g)_a",
         # "log(g)_b",
-        "vrad_a",
-        "vrad_b",
-        'vrad_sys',
+        # "vrad_a",
+        # "vrad_b",
+        # 'vrad_sys',
         "vstar_a",
         "vstar_b",
         'log(R)_a',
         'log(R)_b',
-        'mass_ratio',
+        # 'mass_ratio',
         "dist",
         "Av"
         ])
@@ -90,14 +90,14 @@ def model_specphot(
     sample_i['vrad_sys'] = numpyro.sample("vrad_sys", 
                                           distfn.Uniform(-500.0, 500.0))
     
-    sample_i['v_a'] = numpyro.sample("v_a", 
+    sample_i['vrad_a'] = numpyro.sample("vrad_a", 
                                           distfn.Uniform(-500.0, 500.0))
     
-    sample_i['v_a'] = numpyro.sample("v_b",
+    sample_i['vrad_b'] = numpyro.sample("vrad_b",
                                           distfn.Uniform(-500.0, 500.0))
 
-    # sample_i['v_b'] = numpyro.deterministic("v_b", 
-    #                                        sample_i['vrad_sys'] - (sample_i['v_a'] - sample_i['vrad_sys'])/(sample_i['mass_ratio']))
+    # sample_i['vrad_b'] = numpyro.deterministic("vrad_b", 
+    #                                        sample_i['vrad_sys'] - (sample_i['vrad_a'] - sample_i['vrad_sys'])/(sample_i['mass_ratio']))
 
     # require that |vrad_a - vrad_b| > 1.0
     # mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
