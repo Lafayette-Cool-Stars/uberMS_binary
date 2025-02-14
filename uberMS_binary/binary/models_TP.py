@@ -190,6 +190,8 @@ def model_specphot(
     specmod_est = (specmod_a + R * specmod_b) / (1.0 + R)
 
     # print(f"Some diagnostics:\n\nspecmod_a: {specmod_a}\nspecmod_b:{specmod_b}\nR:{R}\nspecmod_est:{specmod_est}")
+    print(f"specmod_est: {specmod_est}")
+
 
     # calculate likelihood for spectrum
     numpyro.sample("specobs",distfn.Normal(specmod_est, specsig), obs=specobs)
