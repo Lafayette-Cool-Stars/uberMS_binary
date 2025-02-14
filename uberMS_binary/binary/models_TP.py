@@ -96,6 +96,8 @@ def model_specphot(
     sample_i['vrad_b'] = numpyro.sample("vrad_b",
                                           distfn.Uniform(-500.0, 500.0))
 
+    print(f"q: {sample_i['mass_ratio']}\n vradsys:{sample_i['vrad_sys']}\n vrada: {sample_i['vrad_a']}\n vradb: {sample_i['vrad_b']}")
+
     # sample_i['vrad_b'] = numpyro.deterministic("vrad_b", 
     #                                        sample_i['vrad_sys'] - (sample_i['vrad_a'] - sample_i['vrad_sys'])/(sample_i['mass_ratio']))
 
@@ -165,6 +167,8 @@ def model_specphot(
     specpars_a = ([
         sample_i['Teff_a'],sample_i['log(g)_a'],sample_i['[Fe/H]_a'],sample_i['[a/Fe]_a'],
         sample_i['vrad_a'],sample_i['vstar_a'],sample_i['vmic_a'],sample_i['lsf']])
+    print(f"\n\nspecpars_a: {specpars_a}\n\n")
+
     specpars_a += [sample_i['pc{0}'.format(x)] for x in range(len(pcterms))]
     specmod_a = genspecfn(specpars_a,outwave=specwave,modpoly=True)
     specmod_a = jnp.asarray(specmod_a[1])
@@ -184,6 +188,8 @@ def model_specphot(
         (planck(specwave,sample_i['Teff_b']) * radius_b**2.0)
          )
     specmod_est = (specmod_a + R * specmod_b) / (1.0 + R)
+
+    # print(f"Some diagnostics:\n\nspecmod_a: {specmod_a}\nspecmod_b:{specmod_b}\nR:{R}\nspecmod_est:{specmod_est}")
 
     # calculate likelihood for spectrum
     numpyro.sample("specobs",distfn.Normal(specmod_est, specsig), obs=specobs)
