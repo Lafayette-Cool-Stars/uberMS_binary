@@ -62,10 +62,6 @@ def determineprior(parname,priorinfo):
     #if (priorinfo[0] is "keplerian"):
     #    v_a_le, v_a_ue = priorinfo[1]['v_a_le'],priorinfo[1]['v_a_ue']
     #    return numpyro.sample("v_a", distfn.Uniform(v_a_le, v_a_ue))
-    print(f"Here is our parname: {parname}")
-    print(f"Here is our priorinfo 0: {priorinfo[0]}")
-    print(f"Here is our priorinfo 1: {priorinfo[1]}")
-
 
     if (priorinfo[0] is 'IMF'):
         mass_le,mass_ue = priorinfo[1]['mass_le'],priorinfo[1]['mass_ue']
@@ -125,11 +121,6 @@ def determineprior(parname,priorinfo):
             distfn.Normal(loc=priorinfo[1][0],scale=priorinfo[1][1]),
             low=priorinfo[1][2],high=priorinfo[1][3]))
     if priorinfo[0] == 'fixed':
-        if "vmic" in parname:
-            print(f"This parameter: {parname}")
         return numpyro.deterministic(parname,priorinfo[1])
-
-    if "2012" in priorinfo[0]:
-        if "vmic" in parname:
-            print(f"This parameter: {parname}")
+    if "vmic" in parname:
         return numpyro.sample(parname, distfn.Uniform(0.5, 3.0))

@@ -127,19 +127,14 @@ def model_specphot(
     # set vmic only if included in NNs
     if vmicbool:
         if 'vmic_a' in priors.keys():
-            print("we in vmic_a is in prior keys")
             sample_i['vmic_a'] = determineprior('vmic_a',priors['vmic_a'])
         else:
-            print("we in vmic_a is NOT in prior keys")
             sample_i['vmic_a'] = defaultprior('vmic_a')
         if 'vmic_b' in priors.keys():
-            print("we in vmic_b is in prior keys")
             sample_i['vmic_b'] = determineprior('vmic_b',priors['vmic_b'])
         else:
-            print("we in vmic_b is NOT in prior keys")
             sample_i['vmic_b'] = defaultprior('vmic_b')
     else:
-        print("we in vmicbool isn't true!")
         sample_i['vmic_a'] = 1.0
         sample_i['vmic_b'] = 1.0
     
