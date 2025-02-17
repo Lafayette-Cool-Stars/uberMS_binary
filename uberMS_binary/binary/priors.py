@@ -130,4 +130,6 @@ def determineprior(parname,priorinfo):
         return numpyro.deterministic(parname,priorinfo[1])
 
     if "2012" in priorinfo[0]:
+        if "vmic" in parname:
+            print(f"This parameter: {parname}")
         return numpyro.sample(parname, distfn.Uniform(0.5, 3.0))
