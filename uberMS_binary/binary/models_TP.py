@@ -127,16 +127,26 @@ def model_specphot(
     # set vmic only if included in NNs
     if vmicbool:
         if 'vmic_a' in priors.keys():
+            print("we in vmic_a is in prior keys")
             sample_i['vmic_a'] = determineprior('vmic_a',priors['vmic_a'])
         else:
+            print("we in vmic_a is NOT in prior keys")
             sample_i['vmic_a'] = defaultprior('vmic_a')
         if 'vmic_b' in priors.keys():
+            print("we in vmic_b is in prior keys")
             sample_i['vmic_b'] = determineprior('vmic_b',priors['vmic_b'])
         else:
+            print("we in vmic_b is NOT in prior keys")
             sample_i['vmic_b'] = defaultprior('vmic_b')
     else:
+        print("we in vmicbool isn't true!")
         sample_i['vmic_a'] = 1.0
         sample_i['vmic_b'] = 1.0
+    
+    print(f"\n\nprior keys: {priors.keys()}")
+    print(f"vmic_a: {vmicbool}\n{type(sample_i['vmic_a'])}\n{sample_i['vmic_a']}")
+    print(f"vmic_b: {vmicbool}\n{type(sample_i['vmic_b'])}\n{sample_i['vmic_b']}\n\n")
+
 
     # handle various lsf cases
     if 'lsf_array' in priors.keys():
@@ -167,7 +177,7 @@ def model_specphot(
     specpars_a = ([
         sample_i['Teff_a'],sample_i['log(g)_a'],sample_i['[Fe/H]_a'],sample_i['[a/Fe]_a'],
         sample_i['vrad_a'],sample_i['vstar_a'],sample_i['vmic_a'],sample_i['lsf']])
-    print(f"\n\nspecpars_a: {specpars_a}\n\n")
+    print(f"\n\nspecpars_a: {type(specpars_a)}\n\n")
 
     specpars_a += [sample_i['pc{0}'.format(x)] for x in range(len(pcterms))]
     specmod_a = genspecfn(specpars_a,outwave=specwave,modpoly=True)
@@ -190,7 +200,7 @@ def model_specphot(
     specmod_est = (specmod_a + R * specmod_b) / (1.0 + R)
 
     # print(f"Some diagnostics:\n\nspecmod_a: {specmod_a}\nspecmod_b:{specmod_b}\nR:{R}\nspecmod_est:{specmod_est}")
-    print(f"specmod_est: {specmod_est}")
+    print(f"specmod_est: {type(specmod_est)}")
 
 
     # calculate likelihood for spectrum
