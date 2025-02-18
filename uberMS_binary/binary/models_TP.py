@@ -122,17 +122,17 @@ def model_specphot(
 
     # set vmic only if included in NNs
     if vmicbool:
-        if 'vmic_p' in priors.keys():
-            sample_i['vmic_p'] = determineprior('vmic_p',priors['vmic_p'],sample_i['Teff_p'],sample_i['log(g)_p'])
+        if 'vmic_a' in priors.keys():
+            sample_i['vmic_a'] = determineprior('vmic_a',priors['vmic_a'],sample_i['Teff_a'],sample_i['log(g)_a'])
         else:
-            sample_i['vmic_p'] = defaultprior('vmic_p')
-        if 'vmic_s' in priors.keys():
-            sample_i['vmic_s'] = determineprior('vmic_s',priors['vmic_s'],sample_i['Teff_s'],sample_i['log(g)_s'])
+            sample_i['vmic_a'] = defaultprior('vmic_a')
+        if 'vmic_b' in priors.keys():
+            sample_i['vmic_b'] = determineprior('vmic_b',priors['vmic_b'],sample_i['Teff_b'],sample_i['log(g)_b'])
         else:
-            sample_i['vmic_s'] = defaultprior('vmic_s')
+            sample_i['vmic_b'] = defaultprior('vmic_b')
     else:
-        sample_i['vmic_p'] = 1.0
-        sample_i['vmic_s'] = 1.0
+        sample_i['vmic_a'] = 1.0
+        sample_i['vmic_b'] = 1.0
 
     # handle various lsf cases
     if 'lsf_array' in priors.keys():
