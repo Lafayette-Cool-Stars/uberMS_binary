@@ -55,7 +55,7 @@ def defaultprior(parname):
         return numpyro.sample("photjitter", distfn.HalfNormal(0.001))
 
 
-def determineprior(parname,priorinfo):
+def determineprior(parname, priorinfo, *args):
     # advanced priors
     if (priorinfo[0] is 'IMF'):
         mass_le,mass_ue = priorinfo[1]['mass_le'],priorinfo[1]['mass_ue']
@@ -101,9 +101,18 @@ def determineprior(parname,priorinfo):
         return jnp.asarray(priorinfo[0]) * numpyro.sample(
             "lsf_scaling_{}".format(specindex), distfn.Uniform(*priorinfo[1]))
     
-    # handle vmic
-    if "vmic" in parname:
-        return numpyro.sample(parname, distfn.Uniform(0.5, 3.0))
+    if 'vmic' in parname:
+        # check to see if user wants to use relationship for vmic
+        if (priorinfo[0] is 'Bruntt2012'):
+            teff = args[0]
+            logg = args[1]
+            vmic_pred = 1.095 + (5.44E-4) * (teff-5700.0) + (2.56E-7) * (teff-5700.0)**2.0 - 0.378 * (logg - 4.0)
+            if priorinfo[1] == 'fixed':
+                return numpyro.deterministic(parname,vmic_pred)
+            if priorinfo[1] == 'normal':
+                return numpyro.sample(parname,distfn.TruncatedDistribution(
+                    distfn.Normal(loc=vmic_pred,scale=0.1),
+                    low=0.5,high=3.0))
     
     # define user defined priors
 
