@@ -26,7 +26,7 @@ def defaultprior(parname):
         return numpyro.sample(parname, distfn.Uniform(-3.5,0.49))
     if "[a/Fe]" in parname:
         return numpyro.sample(parname, distfn.Uniform(-0.19,0.59))        
-    if "vrad" in parname:
+    if ("vrad" in parname) and (parname != "vrad_b"):
         return numpyro.sample(parname, distfn.Uniform(-500.0, 500.0))
     if "pc0" in parname:
         return numpyro.sample(parname, distfn.Uniform(0.5, 2.0))
@@ -46,8 +46,6 @@ def defaultprior(parname):
     
     if parname == "mass_ratio":
         return numpyro.sample("mass_ratio", distfn.Uniform(1e-5, 1.0))
-    # if parname == "v_a":
-    #    return  numpyro.sample("v_a", distfn.Uniform(-500.0, 500.0))
 
     if parname == "Av":
         return numpyro.sample("Av", distfn.Uniform(1E-6,5.0))
@@ -59,10 +57,6 @@ def defaultprior(parname):
 
 def determineprior(parname,priorinfo):
     # advanced priors
-    #if (priorinfo[0] is "keplerian"):
-    #    v_a_le, v_a_ue = priorinfo[1]['v_a_le'],priorinfo[1]['v_a_ue']
-    #    return numpyro.sample("v_a", distfn.Uniform(v_a_le, v_a_ue))
-
     if (priorinfo[0] is 'IMF'):
         mass_le,mass_ue = priorinfo[1]['mass_le'],priorinfo[1]['mass_ue']
         return numpyro.sample("initial_Mass",IMF_Prior(low=mass_le,high=mass_ue))
@@ -79,25 +73,25 @@ def determineprior(parname,priorinfo):
     if (priorinfo[0] is 'binchem'):
         # last option is both stars have same FeH and aFe (this is the default)
         if priorinfo[1][0] == 'normal':
-            feh_a = numpyro.sample('[Fe/H]_a',distfn.Uniform(-4.0,0.5))
-            feh_b = numpyro.sample('[Fe/H]_b',distfn.Normal(feh_a,priorinfo[1][1]))
-            afe_a = numpyro.sample('[a/Fe]_a',distfn.Uniform(-0.2,0.6))
-            afe_b = numpyro.sample('[a/Fe]_b',distfn.Normal(afe_a,priorinfo[1][1]))
+            feh_a = numpyro.sample('[Fe/H]_a', distfn.Uniform(-4.0,0.5))
+            feh_b = numpyro.sample('[Fe/H]_b', distfn.Normal(feh_a,priorinfo[1][1]))
+            afe_a = numpyro.sample('[a/Fe]_a', distfn.Uniform(-0.2,0.6))
+            afe_b = numpyro.sample('[a/Fe]_b', distfn.Normal(afe_a,priorinfo[1][1]))
             return (feh_a,feh_b,afe_a,afe_b)
 
         elif priorinfo[1][0] == 'uniform':
-            feh_a = numpyro.sample('[Fe/H]_a',distfn.Uniform(-4.0,0.5))
-            feh_b = numpyro.sample('[Fe/H]_b',distfn.Uniform(
+            feh_a = numpyro.sample('[Fe/H]_a', distfn.Uniform(-4.0,0.5))
+            feh_b = numpyro.sample('[Fe/H]_b', distfn.Uniform(
                 feh_a-priorinfo[1][1],feh_a+priorinfo[1][1]))
-            afe_a = numpyro.sample('[a/Fe]_a',distfn.Uniform(-0.2,0.6))
-            afe_b = numpyro.sample('[a/Fe]_b',distfn.Uniform(
+            afe_a = numpyro.sample('[a/Fe]_a', distfn.Uniform(-0.2,0.6))
+            afe_b = numpyro.sample('[a/Fe]_b', distfn.Uniform(
                 afe_a-priorinfo[1][1],afe_a+priorinfo[1][1]))
             return (feh_a,feh_b,afe_a,afe_b)
 
         else:
-            feh_a = numpyro.sample('[Fe/H]_a',distfn.Uniform(-4.0,0.5))
+            feh_a = numpyro.sample('[Fe/H]_a', distfn.Uniform(-4.0,0.5))
             feh_b = numpyro.deterministic('[Fe/H]_b',feh_a)
-            afe_a = numpyro.sample('[a/Fe]_a',distfn.Uniform(-0.2,0.6))
+            afe_a = numpyro.sample('[a/Fe]_a', distfn.Uniform(-0.2,0.6))
             afe_b = numpyro.deterministic('[a/Fe]_b',afe_a)
             return (feh_a,feh_b,afe_a,afe_b)
 
@@ -105,22 +99,24 @@ def determineprior(parname,priorinfo):
     if "lsf_array" in parname:
         specindex = parname.split('_')[-1]
         return jnp.asarray(priorinfo[0]) * numpyro.sample(
-            "lsf_scaling_{}".format(specindex),distfn.Uniform(*priorinfo[1]))
+            "lsf_scaling_{}".format(specindex), distfn.Uniform(*priorinfo[1]))
+    
+    # handle vmic
+    if "vmic" in parname:
+        return numpyro.sample(parname, distfn.Uniform(0.5, 3.0))
     
     # define user defined priors
 
     # standard prior distributions
     if priorinfo[0] == 'uniform':
-        return numpyro.sample(parname,distfn.Uniform(*priorinfo[1]))
+        return numpyro.sample(parname, distfn.Uniform(*priorinfo[1]))
     if priorinfo[0] == 'normal':
-        return numpyro.sample(parname,distfn.Normal(*priorinfo[1]))
+        return numpyro.sample(parname, distfn.Normal(*priorinfo[1]))
     if priorinfo[0] == 'halfnormal':
-        return numpyro.sample(parname,distfn.HalfNormal(priorinfo[1]))
+        return numpyro.sample(parname, distfn.HalfNormal(priorinfo[1]))
     if priorinfo[0] == 'tnormal':
-        return numpyro.sample(parname,distfn.TruncatedDistribution(
+        return numpyro.sample(parname, distfn.TruncatedDistribution(
             distfn.Normal(loc=priorinfo[1][0],scale=priorinfo[1][1]),
             low=priorinfo[1][2],high=priorinfo[1][3]))
     if priorinfo[0] == 'fixed':
-        return numpyro.deterministic(parname,priorinfo[1])
-    if "vmic" in parname:
-        return numpyro.sample(parname, distfn.Uniform(0.5, 3.0))
+        return numpyro.deterministic(parname, priorinfo[1])

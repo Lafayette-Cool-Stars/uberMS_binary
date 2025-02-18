@@ -236,8 +236,9 @@ class sviMS(object):
 
         # reconstruct the posterior
         params = svi_result.params
-        print(f"params: {params}\nrng key: {self.rng_key}\nbig array: {(settings.get('post_resample',int(settings.get('steps',30000)/3)),)}")
-        posterior = guide.sample_posterior(self.rng_key, params, (settings.get('post_resample',int(settings.get('steps',30000)/3)),))
+        posterior = guide.sample_posterior(rng_key=self.rng_key,
+                                           params=params, 
+                                           sample_shape=(settings.get('post_resample',int(settings.get('steps',30000)/3)),))
         if self.verbose:
             print_summary({k: v for k, v in posterior.items() if k != "mu"}, 0.89, False)
 
@@ -440,8 +441,7 @@ class sviTP(object):
 
         # reconstruct the posterior
         params = svi_result.params
-        print(f"params: {type(params)}\nrng key: {type((settings.get('post_resample',int(settings.get('steps',30000)/3)),))}")
-        posterior = guide.sample_posterior(rng_key = self.rng_key,
+        posterior = guide.sample_posterior(rng_key=self.rng_key,
                                            params=params,
                                            sample_shape=(settings.get('post_resample',int(settings.get('steps',30000)/3)),)
                                            )

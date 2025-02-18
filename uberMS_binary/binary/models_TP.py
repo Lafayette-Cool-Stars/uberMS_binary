@@ -83,8 +83,7 @@ def model_specphot(
     # which can be solved v_b to give: v_b = vrad_sys - (v_a - vrad_sys)/q
     sample_i['mass_ratio'] = numpyro.sample("mass_ratio", distfn.Uniform(1e-5, 1.0))
 
-    # Keeping this as just a uniform prior between +/- 500
-    # TODO: Need to figure out how Phill did the vrad priors in smes
+    # Keeping this as just a uniform prior between +/- 500 km/s for now
     # TODO: Figure out where to put in a user-defined flag to make vrad_sys
     # normal instead of uniform
     sample_i['vrad_sys'] = numpyro.sample("vrad_sys", 
@@ -93,13 +92,10 @@ def model_specphot(
     sample_i['vrad_a'] = numpyro.sample("vrad_a", 
                                           distfn.Uniform(-500.0, 500.0))
     
-    sample_i['vrad_b'] = numpyro.sample("vrad_b",
-                                          distfn.Uniform(-500.0, 500.0))
-
-    print(f"q: {sample_i['mass_ratio']}\n vradsys:{sample_i['vrad_sys']}\n vrada: {sample_i['vrad_a']}\n vradb: {sample_i['vrad_b']}")
-
-    # sample_i['vrad_b'] = numpyro.deterministic("vrad_b", 
-    #                                        sample_i['vrad_sys'] - (sample_i['vrad_a'] - sample_i['vrad_sys'])/(sample_i['mass_ratio']))
+    # sample_i['vrad_b'] = numpyro.sample("vrad_b",
+    #                                       distfn.Uniform(-500.0, 500.0))
+    sample_i['vrad_b'] = numpyro.deterministic("vrad_b", 
+                                           sample_i['vrad_sys'] - (sample_i['vrad_a'] - sample_i['vrad_sys'])/(sample_i['mass_ratio']))
 
     # require that |vrad_a - vrad_b| > 1.0
     # mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
@@ -127,31 +123,27 @@ def model_specphot(
     # set vmic only if included in NNs
     if vmicbool:
         if 'vmic_a' in priors.keys():
-            sample_i['vmic_a'] = determineprior('vmic_a',priors['vmic_a'])
+            sample_i['vmic_a'] = determineprior('vmic_a', priors['vmic_a'])
         else:
             sample_i['vmic_a'] = defaultprior('vmic_a')
+
         if 'vmic_b' in priors.keys():
-            sample_i['vmic_b'] = determineprior('vmic_b',priors['vmic_b'])
+            sample_i['vmic_b'] = determineprior('vmic_b', priors['vmic_b'])
         else:
             sample_i['vmic_b'] = defaultprior('vmic_b')
     else:
         sample_i['vmic_a'] = 1.0
         sample_i['vmic_b'] = 1.0
-    
-    print(f"\n\nprior keys: {priors.keys()}")
-    print(f"vmic_a: {vmicbool}\n{type(sample_i['vmic_a'])}\n{sample_i['vmic_a']}")
-    print(f"vmic_b: {vmicbool}\n{type(sample_i['vmic_b'])}\n{sample_i['vmic_b']}\n\n")
-
 
     # handle various lsf cases
     if 'lsf_array' in priors.keys():
         # user has defined an lsf array, so set as free parameter 
         # a scaling on the lsf
-        sample_i['lsf'] = determineprior('lsf_array',priors['lsf_array'])
+        sample_i['lsf'] = determineprior('lsf_array', priors['lsf_array'])
     else:
         # user hasn't set a lsf array, treat lsf as R
         if 'lsf' in priors.keys():
-            sample_i['lsf'] = determineprior('lsf',priors['lsf'])
+            sample_i['lsf'] = determineprior('lsf', priors['lsf'])
         else:
             sample_i['lsf'] = defaultprior('lsf')
 
@@ -172,7 +164,6 @@ def model_specphot(
     specpars_a = ([
         sample_i['Teff_a'],sample_i['log(g)_a'],sample_i['[Fe/H]_a'],sample_i['[a/Fe]_a'],
         sample_i['vrad_a'],sample_i['vstar_a'],sample_i['vmic_a'],sample_i['lsf']])
-    print(f"\n\nspecpars_a: {type(specpars_a)}\n\n")
 
     specpars_a += [sample_i['pc{0}'.format(x)] for x in range(len(pcterms))]
     specmod_a = genspecfn(specpars_a,outwave=specwave,modpoly=True)
@@ -193,10 +184,6 @@ def model_specphot(
         (planck(specwave,sample_i['Teff_b']) * radius_b**2.0)
          )
     specmod_est = (specmod_a + R * specmod_b) / (1.0 + R)
-
-    # print(f"Some diagnostics:\n\nspecmod_a: {specmod_a}\nspecmod_b:{specmod_b}\nR:{R}\nspecmod_est:{specmod_est}")
-    print(f"specmod_est: {type(specmod_est)}")
-
 
     # calculate likelihood for spectrum
     numpyro.sample("specobs",distfn.Normal(specmod_est, specsig), obs=specobs)
