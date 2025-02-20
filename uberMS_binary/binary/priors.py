@@ -127,7 +127,7 @@ def determineprior(parname, priorinfo, *args):
         vradsys = numpyro.sample("vrad_sys", distfn.Uniform(-500.0, 500.0))
         vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
 
-        if priorinfo[1] == 'Wilson1941':
+        if priorinfo[0] == 'Wilson1941':
             vradb = numpyro.deterministic("vrad_b",
                                     vradsys - (vrada - vradsys)/(mass_ratio))
         else:
