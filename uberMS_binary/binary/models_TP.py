@@ -78,25 +78,6 @@ def model_specphot(
     # sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(sample_i['log(g)_a'],5.5))
     sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(0.0,5.5))
 
-    # Mass ratio and velocity priors
-    # Based on the equation q = (v_a - vrad_sys) / (vrad_sys - v_b),
-    # which can be solved v_b to give: v_b = vrad_sys - (v_a - vrad_sys)/q
-    sample_i['mass_ratio'] = numpyro.sample("mass_ratio", distfn.Uniform(1e-5, 1.0))
-
-    # Keeping this as just a uniform prior between +/- 500 km/s for now
-    # TODO: Figure out where to put in a user-defined flag to make vrad_sys
-    # normal instead of uniform
-    sample_i['vrad_sys'] = numpyro.sample("vrad_sys", 
-                                          distfn.Uniform(-500.0, 500.0))
-    
-    sample_i['vrad_a'] = numpyro.sample("vrad_a", 
-                                          distfn.Uniform(-500.0, 500.0))
-    
-    # sample_i['vrad_b'] = numpyro.sample("vrad_b",
-    #                                       distfn.Uniform(-500.0, 500.0))
-    sample_i['vrad_b'] = numpyro.deterministic("vrad_b", 
-                                           sample_i['vrad_sys'] - (sample_i['vrad_a'] - sample_i['vrad_sys'])/(sample_i['mass_ratio']))
-
     # require that |vrad_a - vrad_b| > 1.0
     # mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
     # component_dists = ([

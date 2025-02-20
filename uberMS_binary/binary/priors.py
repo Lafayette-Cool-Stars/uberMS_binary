@@ -113,6 +113,27 @@ def determineprior(parname, priorinfo, *args):
                 return numpyro.sample(parname,distfn.TruncatedDistribution(
                     distfn.Normal(loc=vmic_pred,scale=0.1),
                     low=0.5,high=3.0))
+
+
+    # handle vrads and mass ratio
+    # Based on the equation q = (v_a - vrad_sys) / (vrad_sys - v_b),
+    # which can be solved v_b to give: v_b = vrad_sys - (v_a - vrad_sys)/q
+
+    # Keeping vrad_sys as just a uniform prior between +/- 500 km/s for now
+    # TODO: Figure out where to put in a user-defined flag to make vrad_sys
+    # normal instead of uniform
+    if "vrad" in parname:
+        mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(1e-5, 1.0))
+        vradsys = numpyro.sample("vrad_sys", distfn.Uniform(-500.0, 500.0))
+        vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
+
+        if priorinfo[1] == 'Wilson1941':
+            vradb = numpyro.deterministic("vrad_b",
+                                    vradsys - (vrada - vradsys)/(mass_ratio))
+        else:
+            vradb = numpyro.sample("vrad_b", distfn.Uniform(-500.0, 500.0))
+        
+        return (mass_ratio, vradsys, vrada, vradb)
     
     # define user defined priors
 
