@@ -78,7 +78,11 @@ def model_specphot(
     # sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(sample_i['log(g)_a'],5.5))
     sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(0.0,5.5))
     
-    (sample_i['mass_ratio'], sample_i['vrad_sys'], sample_i['vrad_a'], sample_i['vrad_b']) = determineprior(parname='vrad', priorinfo=priors['vrad_sys'])
+    (sample_i['mass_ratio'],
+     sample_i['vrad_sys'], 
+     sample_i['vrad_a'],
+     sample_i['vrad_b']) = determineprior(parname='vrad',
+                                          priorinfo=priors['vrad_sys'])
 
     # require that |vrad_a - vrad_b| > 1.0
     # mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
