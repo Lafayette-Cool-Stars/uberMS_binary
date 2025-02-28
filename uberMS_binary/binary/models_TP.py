@@ -81,8 +81,8 @@ def model_specphot(
     (sample_i['mass_ratio'],
      sample_i['vrad_sys'], 
      sample_i['vrad_a'],
-     sample_i['vrad_b']) = determineprior(parname='vrad',
-                                          priorinfo=priors['vrad_sys'])
+     sample_i['vrad_b']) = determineprior(parname='q_vr',
+                                          priorinfo=priors['q_vr'])
 
     # require that |vrad_a - vrad_b| > 1.0
     # mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
