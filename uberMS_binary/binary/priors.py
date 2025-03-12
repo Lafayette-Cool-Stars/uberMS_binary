@@ -122,14 +122,24 @@ def determineprior(parname, priorinfo, *args):
     # TODO: Figure out where to put in a user-defined flag to make vrad_sys
     # normal instead of uniform
     if 'q_vr' == parname:
-        mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(1e-5, 1.0))
-        vradsys = numpyro.sample("vrad_sys", distfn.Uniform(-500.0, 500.0))
-        vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
-    
-        vradb = numpyro.deterministic("vrad_b",
-                            vradsys - (vrada - vradsys)/(mass_ratio))
+        if priorinfo[0] == 'Milliman2014':
+            mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(1e-6, 1.0))
+            vradsys = numpyro.sample("vrad_sys", distfn.Normal(-2.45, 1.02))
+            vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
         
-        return (mass_ratio, vradsys, vrada, vradb)
+            vradb = numpyro.deterministic("vrad_b",
+                                vradsys - (vrada - vradsys)/(mass_ratio))
+            
+            return (mass_ratio, vradsys, vrada, vradb)
+        else:
+            mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(1e-6, 1.0))
+            vradsys = numpyro.sample("vrad_sys", distfn.Uniform(-500.0, 500.0))
+            vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
+        
+            vradb = numpyro.deterministic("vrad_b",
+                                vradsys - (vrada - vradsys)/(mass_ratio))
+            
+            return (mass_ratio, vradsys, vrada, vradb)
     
     if 'vrad' in parname:
         return numpyro.distfn.Uniform(-500.0,500.0)      
