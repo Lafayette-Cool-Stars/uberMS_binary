@@ -129,6 +129,22 @@ def determineprior(parname, priorinfo, *args):
         
             vradb = numpyro.deterministic("vrad_b",
                                 vradsys - (vrada - vradsys)/(mass_ratio))
+
+            print("mass_ratio: ", mass_ratio)
+            print("mass_ratio variance: ", mass_ratio.variance)
+            print("mass_ratio mean: ", mass_ratio.mean)
+            
+            print("vradsys: ", vradsys)
+            print("vradsys variance: ", vradsys.variance)
+            print("vradsys mean: ", vradsys.mean)
+            
+            print("vrada: ", vrada)
+            print("vrada variance: ", vrada.variance)
+            print("vrada mean: ", vrada.mean)
+
+            print("vradb: ", vradb)
+            print("vradb variance: ", vradb.variance)
+            print("vradb mean: ", vradb.mean)
             
             return (mass_ratio, vradsys, vrada, vradb)
         else:
@@ -139,6 +155,23 @@ def determineprior(parname, priorinfo, *args):
             vradb = numpyro.deterministic("vrad_b",
                                 vradsys - (vrada - vradsys)/(mass_ratio))
             
+            print("mass_ratio: ", mass_ratio)
+            print("mass_ratio variance: ", mass_ratio.variance)
+            print("mass_ratio mean: ", mass_ratio.mean)
+            
+            print("vradsys: ", vradsys)
+            print("vradsys variance: ", vradsys.variance)
+            print("vradsys mean: ", vradsys.mean)
+            
+            print("vrada: ", vrada)
+            print("vrada variance: ", vrada.variance)
+            print("vrada mean: ", vrada.mean)
+
+            print("vradb: ", vradb)
+            print("vradb variance: ", vradb.variance)
+            print("vradb mean: ", vradb.mean)
+
+
             return (mass_ratio, vradsys, vrada, vradb)
     
     if 'vrad' in parname:
