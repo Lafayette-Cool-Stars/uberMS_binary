@@ -33,6 +33,11 @@ def model_specphot(
     photobserr = indata['photobserr']
     filtarray  = indata['filterarray']
 
+    # pull out MIST isochrone data
+    mistteff  = indata['mistteff']
+    mistlogg  = indata['mistlogg']
+    mistmass  = indata['mistmass']
+
     # pull out fitting functions
     genphotfn = fitfunc['genphotfn']
     genspecfn = fitfunc['genspecfn']
@@ -69,20 +74,38 @@ def model_specphot(
         else:
             sample_i[pp] = defaultprior(pp)
 
-    # define the primary as the hotter of the two stars
-    sample_i['Teff_a'] = numpyro.sample("Teff_a",distfn.Uniform(2500.0, 10000.0))
-    sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, sample_i['Teff_a']+250.0))
-    # sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, 10000.0))
-
-    sample_i['log(g)_a'] = numpyro.sample("log(g)_a",distfn.Uniform(0.0, 5.5))
-    # sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(sample_i['log(g)_a'],5.5))
-    sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(0.0,5.5))
-    
+    # q and rv relationship as found in Wilson (1941) eqn. 1
+    # this defines the primary as the heavier of the two stars
     (sample_i['mass_ratio'],
      sample_i['vrad_sys'], 
      sample_i['vrad_a'],
      sample_i['vrad_b']) = determineprior(parname='q_vr',
                                           priorinfo=priors['q_vr'])
+    
+    # sample Teff and log(g) of primary
+    sample_i['Teff_a'] = numpyro.sample("Teff_a",distfn.Uniform(2500.0, 10000.0))
+    sample_i['log(g)_a'] = numpyro.sample("log(g)_a",distfn.Uniform(0.0, 5.5))
+    # sample_i['Teff_a'] = numpyro.sample("Teff_a",distfn.Uniform(2500.0, 10000.0))
+
+
+    # TODO: Need to make sure that the Teff and log(g) of the secondary are
+    # properly output. I think that will propagate starting from the runscript
+    # ^^can use how Teff and logg are treated as a sample
+
+    # determine mass, Teff, and log(g) of secondary
+    # define a tolerance to find the closest teff and logg
+    teff_tol = 100
+    logg_tol = 0.1
+    mb_tol = 0.05
+
+
+
+    # sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, sample_i['Teff_a']+250.0))
+    # sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, 10000.0))
+    # sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(sample_i['log(g)_a'],5.5))
+    # sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(0.0,5.5))
+    
+
 
     # require that |vrad_a - vrad_b| > 1.0
     # mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
