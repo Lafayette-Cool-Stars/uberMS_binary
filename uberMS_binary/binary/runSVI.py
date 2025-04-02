@@ -392,9 +392,9 @@ class sviTP(object):
                 'photobs':phot_in,
                 'photobserr':photerr_in,
                 'filterarray':filterarray,
-                'mistteff':indict['mist']['Teff'],
-                'mistlogg':indict['mist']['logg'],
-                'mistinitmass':indict['mist']['initial_mass'],
+                'mistteff':indict['iso']['Teff'],
+                'mistlogg':indict['iso']['logg'],
+                'mistinitmass':indict['iso']['initial_mass'],
                 },
             'fitfunc':{
                 'genspecfn':self.genspecfn,
