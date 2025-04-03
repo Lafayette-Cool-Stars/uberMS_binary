@@ -139,11 +139,11 @@ def model_specphot(
         # now do interpolation
         mass_a = jnp.interp(sample_i['Teff_a'], teff_cts, isoinitmass[idx_closest][idx_cts])
         # print(f'closest masses: {data["initial_mass"][idx_closest][idx_cts]}')
-        print(f"\n mass_a: {mass_a}")
+        # print(f"\n mass_a: {mass_a}")
 
         # find mass_b using mass_a and sample_q
         mass_b = mass_a * sample_i['mass_ratio']
-        print(f"\n mass_b: {mass_b}\n")
+        # print(f"\n mass_b: {mass_b}\n")
 
         # get logg_b and teff_b
         # find closest mass to mass_b
@@ -173,13 +173,13 @@ def model_specphot(
         # print(jnp.shape(closest_teff))
         # print(jnp.shape(data['initial_mass'][idx_closest]))
         mass_a = jnp.interp(sample_i['Teff_a'], closest_teff, isoinitmass[idx_closest])
-        print(f'closest masses: {isoinitmass[idx_closest]}')
+        # print(f'closest masses: {isoinitmass[idx_closest]}')
 
-        print(f"\n mass_a: {mass_a}")
+        # print(f"\n mass_a: {mass_a}")
 
         # find mass_b using mass_a and sample_q
         mass_b = mass_a * sample_i['mass_ratio']
-        print(f"\n mass_b: {mass_b}")
+        # print(f"\n mass_b: {mass_b}")
 
         # get logg_b and teff_b
         # find closest mass to mass_b

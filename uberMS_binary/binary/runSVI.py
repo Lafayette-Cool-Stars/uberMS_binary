@@ -397,7 +397,7 @@ class sviTP(object):
                 'genspecfn':self.genspecfn,
                 'genphotfn':self.genphotfn,
                 'isoteff':indict['iso']['Teff'],
-                'isologg':indict['iso']['logg'],
+                'isologg':indict['iso']['log(g)'],
                 'isoinitmass':indict['iso']['initial_mass'],
                 },
             'priors':priors,
