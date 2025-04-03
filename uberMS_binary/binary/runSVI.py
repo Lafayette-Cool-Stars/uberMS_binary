@@ -396,7 +396,7 @@ class sviTP(object):
             'fitfunc':{
                 'genspecfn':self.genspecfn,
                 'genphotfn':self.genphotfn,
-                'isoteff':indict['iso']['Teff'],
+                'isoTeff':indict['iso']['Teff'],
                 'isologg':indict['iso']['log(g)'],
                 'isoinitmass':indict['iso']['initial_mass'],
                 },

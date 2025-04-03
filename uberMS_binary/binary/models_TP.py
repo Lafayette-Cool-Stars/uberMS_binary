@@ -3,6 +3,7 @@ import numpyro.distributions as distfn
 from numpyro.distributions import constraints
 from numpyro.contrib.control_flow import cond
 
+from jax import jit
 import jax.numpy as jnp
 
 from .priors import determineprior, defaultprior
@@ -17,6 +18,59 @@ def planck(wav, T):
     b = h*c/(wave_i*k*T)
     intensity = a/ ( (wave_i**5) * (jnp.exp(b) - 1.0) )
     return intensity
+
+@jit
+def find_closest_mass(sample_temp, sample_logg, isoTeff, isologg, isoinitmass):
+    # calculate distance to MIST isochrone points in (temp, logg) space
+    distances = jnp.sqrt((isoTeff - sample_temp)**2
+                         + (isologg - sample_logg)**2)
+    
+    # find indices of 2 closest points
+    idx_closest = jnp.argsort(distances)[:2]
+    
+    # extract the two closest temps and init masses
+    teff1, teff2 = isoTeff[idx_closest[0]], isoTeff[idx_closest[1]]
+    # logg1, logg2 = isologg[idx_closest[0]], isologg[idx_closest[1]]
+    mass1, mass2 = isoinitmass[idx_closest[0]], isoinitmass[idx_closest[1]]
+    
+    # interpolate in temp to grab primary mass
+    interpolated_mass = jnp.interp(x=sample_temp,
+                                   xp=jnp.array([teff1, teff2]),
+                                   fp=jnp.array([mass1, mass2])
+                                   )
+    
+    return interpolated_mass
+
+
+@jit
+def find_closest_teff_logg(mass_a, q, isoTeff, isologg, isoinitmass):
+    # calculate secondary mass
+    mass_b = mass_a * q
+
+    # find closest masses on MIST isochrone to mass_b
+    distances = jnp.abs(isoinitmass - mass_b)
+    
+    # find indices of 2 closest points
+    idx_closest = jnp.argsort(distances)[:2]
+    
+    # extract the two closest temps and log(g)s
+    teff1, teff2 = isoTeff[idx_closest[0]], isoTeff[idx_closest[1]]
+    logg1, logg2 = isologg[idx_closest[0]], isologg[idx_closest[1]]
+    mass1, mass2 = isoinitmass[idx_closest[0]], isoinitmass[idx_closest[1]]
+    
+    # interpolate in temp to grab primary mass
+    interpolated_teff = jnp.interp(x=mass_a,
+                                   xp=jnp.array([mass1, mass2]),
+                                   fp=jnp.array([teff1, teff2])
+                                   )
+    
+    interpolated_logg = jnp.interp(x=mass_a,
+                                   xp=jnp.array([mass1, mass2]),
+                                   fp=jnp.array([logg1, logg2])
+                                   )
+    
+    return mass_b, interpolated_teff, interpolated_logg
+
 
 # define the model
 def model_specphot(
@@ -38,9 +92,9 @@ def model_specphot(
     genspecfn = fitfunc['genspecfn']
 
     # pull out MIST isochrone information
-    isoteff  = fitfunc['isoteff']
-    isologg  = fitfunc['isologg']
-    isoinitmass  = fitfunc['isoinitmass']
+    isoTeff  = jnp.array(fitfunc['isoTeff'])
+    isologg  = jnp.array(fitfunc['isologg'])
+    isoinitmass  = jnp.array(fitfunc['isoinitmass'])
 
     # pull out additional info
     parallax = additionalinfo.get('parallax',[None,None])
@@ -85,120 +139,27 @@ def model_specphot(
     # sample Teff and log(g) of primary, ensuring they will not give results
     # that are outside the MIST isochrone grid
     sample_i['Teff_a'] = numpyro.sample("Teff_a",
-                                        distfn.Uniform(min(isoteff),
-                                                       max(isoteff)))
+                                        distfn.Uniform(min(isoTeff),
+                                                       max(isoTeff)))
     sample_i['log(g)_a'] = numpyro.sample("log(g)_a",
                                           distfn.Uniform(min(isologg),
                                                          max(isologg)))
     # sample_i['Teff_a'] = numpyro.sample("Teff_a",distfn.Uniform(2500.0, 10000.0))
 
 
-    # determine mass, Teff, and log(g) of secondary
-    # define a tolerance to find the closest teff and logg
-    teff_tol = 100
-    logg_tol = 0.1
-    mb_tol = 0.05
+    # grab primary mass from MIST isochrone
+    mass_a = find_closest_mass(sample_i['Teff_a'], sample_i['log(g)_a'])
 
-    # define a condition to find the indices of the closest teff and logg
-    # on the MIST isochrone to the sampled values for the primary
-    cond_teff = jnp.abs(isoteff - sample_i['Teff_a']) < teff_tol
-    cond_logg = jnp.abs(isologg - sample_i['log(g)_a']) < logg_tol
-
-    idx_closest = jnp.array(jnp.where(cond_teff & cond_logg))[0]
-    closest_logg = isologg[idx_closest]
-    closest_teff = isoteff[idx_closest]
-
-    # check to make sure we have some points within the tolerances
-    # if not, multiply the tolerances by 100 and try again
-    # this would better be done with a try/except block, but this is a quick fix
-    if (len(closest_teff) == 0):
-        print(f"no stars within Teff tolerance of {teff_tol} K and {logg_tol}")
-        print(f"increasing teff_tol to {teff_tol * 100} K")
-
-        teff_tol = teff_tol * 100
-        cond_teff = jnp.abs(isoteff - sample_i['Teff_a']) < teff_tol
-        idx_closest = jnp.array(jnp.where(cond_teff & cond_logg))[0]
-        closest_teff = isoteff[idx_closest]
-        
-    if (len(closest_logg) == 0):
-        print(f"no stars within log(g) tolerance of {logg_tol}")
-        print(f"increasing logg_tol to {logg_tol * 100}")
-
-        logg_tol = logg_tol * 100
-        cond_logg = jnp.abs(isologg - sample_i['log(g)_a']) < logg_tol
-        closest_logg = isologg[idx_closest]
-
-    if ~(jnp.all(jnp.diff(idx_closest) == 1)):
-        median_logg = jnp.median(closest_logg)
-        # print(f"median closest logg: {median_logg}")
-        idx_cts = jnp.where(isologg[idx_closest] > median_logg)
-        logg_cts = isologg[idx_closest][idx_cts]
-        teff_cts = isoteff[idx_closest][idx_cts]
-
-
-        # now do interpolation
-        mass_a = jnp.interp(sample_i['Teff_a'], teff_cts, isoinitmass[idx_closest][idx_cts])
-        # print(f'closest masses: {data["initial_mass"][idx_closest][idx_cts]}')
-        # print(f"\n mass_a: {mass_a}")
-
-        # find mass_b using mass_a and sample_q
-        mass_b = mass_a * sample_i['mass_ratio']
-        # print(f"\n mass_b: {mass_b}\n")
-
-        # get logg_b and teff_b
-        # find closest mass to mass_b
-        cond_mass_b = jnp.abs(isoinitmass - mass_b) < mb_tol
-
-        idx_closest_b = jnp.where(cond_mass_b)
-
-        # the initial_mass column is sorted, so we do not need to check
-        # for continuity of the indices
-        logg_b = jnp.interp(mass_b,
-                            isoinitmass[idx_closest_b], isologg[idx_closest_b])
-        teff_b =jnp.interp(mass_b,
-                           isoinitmass[idx_closest_b], isoteff[idx_closest_b])
-
-        # output the quantities we found here to the sample_i dict
-        sample_i['M_a'] = numpyro.deterministic("M_a", mass_a)
-        sample_i['M_b'] = numpyro.deterministic("M_b", mass_b)
-        sample_i['log(g)_b'] = numpyro.deterministic("log(g)_b", logg_b)
-        sample_i['Teff_b'] = numpyro.deterministic("Teff_b", teff_b)
-        
-        # print("\n\n\n\n\n\n")
-        # print(logg_b, teff_b)
-        # print(isologg[idx_closest_b], isoteff[idx_closest_b])
-    else:
-        # 1d regular interpolation to get primary mass
-        # print(sample_Teff_a)
-        # print(jnp.shape(closest_teff))
-        # print(jnp.shape(data['initial_mass'][idx_closest]))
-        mass_a = jnp.interp(sample_i['Teff_a'], closest_teff, isoinitmass[idx_closest])
-        # print(f'closest masses: {isoinitmass[idx_closest]}')
-
-        # print(f"\n mass_a: {mass_a}")
-
-        # find mass_b using mass_a and sample_q
-        mass_b = mass_a * sample_i['mass_ratio']
-        # print(f"\n mass_b: {mass_b}")
-
-        # get logg_b and teff_b
-        # find closest mass to mass_b
-        cond_mass_b = jnp.abs(isoinitmass - mass_b) < mb_tol
-        idx_closest_b = jnp.where(cond_mass_b)
-
-        # the initial_mass column is sorted, so we do not need to check
-        # for continuity of the indices
-        logg_b = jnp.interp(mass_b,
-                            isoinitmass[idx_closest_b], isologg[idx_closest_b])
-        teff_b = jnp.interp(mass_b,
-                            isoinitmass[idx_closest_b], isoteff[idx_closest_b])
-
-        # output the quantities we found here to the sample_i dict
-        sample_i['M_a'] = numpyro.deterministic("M_a", mass_a)
-        sample_i['M_b'] = numpyro.deterministic("M_b", mass_b)
-        sample_i['log(g)_b'] = numpyro.deterministic("log(g)_b", logg_b)
-        sample_i['Teff_b'] = numpyro.deterministic("Teff_b", teff_b)
-
+    # grab secondary mass, Teff, and log(g) from MIST isochrone,
+    # primary mass, and mass ratio
+    (mass_b, teff_b, logg_b) = find_closest_teff_logg(mass_a,
+                                                      sample_i['mass_ratio'])
+    
+    # output the quantities we found here to the sample_i dict
+    sample_i['M_a'] = numpyro.deterministic("M_a", mass_a)
+    sample_i['M_b'] = numpyro.deterministic("M_b", mass_b)
+    sample_i['log(g)_b'] = numpyro.deterministic("log(g)_b", logg_b)
+    sample_i['Teff_b'] = numpyro.deterministic("Teff_b", teff_b)
 
     # sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, sample_i['Teff_a']+250.0))
     # sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, 10000.0))
