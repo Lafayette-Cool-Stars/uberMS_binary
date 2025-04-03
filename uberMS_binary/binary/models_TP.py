@@ -33,14 +33,14 @@ def model_specphot(
     photobserr = indata['photobserr']
     filtarray  = indata['filterarray']
 
-    # pull out MIST isochrone data
-    mistteff  = indata['mistteff']
-    mistlogg  = indata['mistlogg']
-    mistinitmass  = indata['mistinitmass']
-
     # pull out fitting functions
     genphotfn = fitfunc['genphotfn']
     genspecfn = fitfunc['genspecfn']
+
+    # pull out MIST isochrone information
+    isoteff  = fitfunc['isoteff']
+    isologg  = fitfunc['isologg']
+    isoinitmass  = fitfunc['isoinitmass']
 
     # pull out additional info
     parallax = additionalinfo.get('parallax',[None,None])
@@ -75,24 +75,23 @@ def model_specphot(
             sample_i[pp] = defaultprior(pp)
 
     # q and rv relationship as found in Wilson (1941) eqn. 1
-    # this defines the primary as the heavier of the two stars
+    # we define the primary as the heavier of the two stars here
     (sample_i['mass_ratio'],
      sample_i['vrad_sys'], 
      sample_i['vrad_a'],
      sample_i['vrad_b']) = determineprior(parname='q_vr',
                                           priorinfo=priors['q_vr'])
     
-    # sample Teff and log(g) of primary
-    # TODO: change these priors to be based on the MIST isochrone data
-    sample_i['Teff_a'] = numpyro.sample("Teff_a",distfn.Uniform(2500.0, 10000.0))
-    sample_i['log(g)_a'] = numpyro.sample("log(g)_a",distfn.Uniform(0.0, 5.5))
+    # sample Teff and log(g) of primary, ensuring they will not give results
+    # that are outside the MIST isochrone grid
+    sample_i['Teff_a'] = numpyro.sample("Teff_a",
+                                        distfn.Uniform(min(isoteff),
+                                                       max(isoteff)))
+    sample_i['log(g)_a'] = numpyro.sample("log(g)_a",
+                                          distfn.Uniform(min(isologg),
+                                                         max(isologg)))
     # sample_i['Teff_a'] = numpyro.sample("Teff_a",distfn.Uniform(2500.0, 10000.0))
 
-
-    # TODO: Need to make sure that the Teff and log(g) of the secondary are
-    # properly output. I think that will propagate starting from the runscript
-    # ^^can use how Teff and logg are currently treated in the main branch
-    # as a sample
 
     # determine mass, Teff, and log(g) of secondary
     # define a tolerance to find the closest teff and logg
@@ -102,12 +101,12 @@ def model_specphot(
 
     # define a condition to find the indices of the closest teff and logg
     # on the MIST isochrone to the sampled values for the primary
-    cond_teff = jnp.abs(mistteff - sample_i['Teff_a']) < teff_tol
-    cond_logg = jnp.abs(mistlogg - sample_i['log(g)_a']) < logg_tol
+    cond_teff = jnp.abs(isoteff - sample_i['Teff_a']) < teff_tol
+    cond_logg = jnp.abs(isologg - sample_i['log(g)_a']) < logg_tol
 
     idx_closest = jnp.array(jnp.where(cond_teff & cond_logg))[0]
-    closest_logg = mistlogg[idx_closest]
-    closest_teff = mistteff[idx_closest]
+    closest_logg = isologg[idx_closest]
+    closest_teff = isoteff[idx_closest]
 
     # check to make sure we have some points within the tolerances
     # if not, multiply the tolerances by 100 and try again
@@ -117,28 +116,28 @@ def model_specphot(
         print(f"increasing teff_tol to {teff_tol * 100} K")
 
         teff_tol = teff_tol * 100
-        cond_teff = jnp.abs(mistteff - sample_i['Teff_a']) < teff_tol
+        cond_teff = jnp.abs(isoteff - sample_i['Teff_a']) < teff_tol
         idx_closest = jnp.array(jnp.where(cond_teff & cond_logg))[0]
-        closest_teff = mistteff[idx_closest]
+        closest_teff = isoteff[idx_closest]
         
     if (len(closest_logg) == 0):
         print(f"no stars within log(g) tolerance of {logg_tol}")
         print(f"increasing logg_tol to {logg_tol * 100}")
 
         logg_tol = logg_tol * 100
-        cond_logg = jnp.abs(mistlogg - sample_i['log(g)_a']) < logg_tol
-        closest_logg = mistlogg[idx_closest]
+        cond_logg = jnp.abs(isologg - sample_i['log(g)_a']) < logg_tol
+        closest_logg = isologg[idx_closest]
 
     if ~(jnp.all(jnp.diff(idx_closest) == 1)):
         median_logg = jnp.median(closest_logg)
         # print(f"median closest logg: {median_logg}")
-        idx_cts = jnp.where(mistlogg[idx_closest] > median_logg)
-        logg_cts = mistlogg[idx_closest][idx_cts]
-        teff_cts = mistteff[idx_closest][idx_cts]
+        idx_cts = jnp.where(isologg[idx_closest] > median_logg)
+        logg_cts = isologg[idx_closest][idx_cts]
+        teff_cts = isoteff[idx_closest][idx_cts]
 
 
         # now do interpolation
-        mass_a = jnp.interp(sample_i['Teff_a'], teff_cts, mistinitmass[idx_closest][idx_cts])
+        mass_a = jnp.interp(sample_i['Teff_a'], teff_cts, isoinitmass[idx_closest][idx_cts])
         # print(f'closest masses: {data["initial_mass"][idx_closest][idx_cts]}')
         print(f"\n mass_a: {mass_a}")
 
@@ -148,14 +147,16 @@ def model_specphot(
 
         # get logg_b and teff_b
         # find closest mass to mass_b
-        cond_mass_b = jnp.abs(mistinitmass - mass_b) < mb_tol
+        cond_mass_b = jnp.abs(isoinitmass - mass_b) < mb_tol
 
         idx_closest_b = jnp.where(cond_mass_b)
 
         # the initial_mass column is sorted, so we do not need to check
         # for continuity of the indices
-        logg_b = jnp.interp(mass_b, mistinitmass[idx_closest_b], mistlogg[idx_closest_b])
-        teff_b =jnp.interp(mass_b, mistinitmass[idx_closest_b], mistteff[idx_closest_b])
+        logg_b = jnp.interp(mass_b,
+                            isoinitmass[idx_closest_b], isologg[idx_closest_b])
+        teff_b =jnp.interp(mass_b,
+                           isoinitmass[idx_closest_b], isoteff[idx_closest_b])
 
         # output the quantities we found here to the sample_i dict
         sample_i['M_a'] = numpyro.deterministic("M_a", mass_a)
@@ -165,14 +166,14 @@ def model_specphot(
         
         # print("\n\n\n\n\n\n")
         # print(logg_b, teff_b)
-        # print(mistlogg[idx_closest_b], mistteff[idx_closest_b])
+        # print(isologg[idx_closest_b], isoteff[idx_closest_b])
     else:
         # 1d regular interpolation to get primary mass
         # print(sample_Teff_a)
         # print(jnp.shape(closest_teff))
         # print(jnp.shape(data['initial_mass'][idx_closest]))
-        mass_a = jnp.interp(sample_i['Teff_a'], closest_teff, mistinitmass[idx_closest])
-        print(f'closest masses: {mistinitmass[idx_closest]}')
+        mass_a = jnp.interp(sample_i['Teff_a'], closest_teff, isoinitmass[idx_closest])
+        print(f'closest masses: {isoinitmass[idx_closest]}')
 
         print(f"\n mass_a: {mass_a}")
 
@@ -182,13 +183,15 @@ def model_specphot(
 
         # get logg_b and teff_b
         # find closest mass to mass_b
-        cond_mass_b = jnp.abs(mistinitmass - mass_b) < mb_tol
+        cond_mass_b = jnp.abs(isoinitmass - mass_b) < mb_tol
         idx_closest_b = jnp.where(cond_mass_b)
 
         # the initial_mass column is sorted, so we do not need to check
         # for continuity of the indices
-        logg_b = jnp.interp(mass_b, mistinitmass[idx_closest_b], mistlogg[idx_closest_b])
-        teff_b = jnp.interp(mass_b, mistinitmass[idx_closest_b], mistteff[idx_closest_b])
+        logg_b = jnp.interp(mass_b,
+                            isoinitmass[idx_closest_b], isologg[idx_closest_b])
+        teff_b = jnp.interp(mass_b,
+                            isoinitmass[idx_closest_b], isoteff[idx_closest_b])
 
         # output the quantities we found here to the sample_i dict
         sample_i['M_a'] = numpyro.deterministic("M_a", mass_a)
