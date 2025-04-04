@@ -93,7 +93,6 @@ def model_specphot(
 
     # pull out MIST isochrone information
     isoTeff     = jnp.array(fitfunc['isoTeff'])
-    print('isoTeff after definition')
     isologg     = jnp.array(fitfunc['isologg'])
     isoinitmass = jnp.array(fitfunc['isoinitmass'])
 
