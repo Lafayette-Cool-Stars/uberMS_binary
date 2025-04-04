@@ -93,6 +93,7 @@ def model_specphot(
 
     # pull out MIST isochrone information
     isoTeff     = jnp.array(fitfunc['isoTeff'])
+    print('isoTeff after definition')
     isologg     = jnp.array(fitfunc['isologg'])
     isoinitmass = jnp.array(fitfunc['isoinitmass'])
 
@@ -138,12 +139,8 @@ def model_specphot(
     
     # sample Teff and log(g) of primary, ensuring they will not give results
     # that are outside the MIST isochrone grid
-    sample_i['Teff_a'] = numpyro.sample("Teff_a",
-                                        distfn.Uniform(min(isoTeff),
-                                                       max(isoTeff)))
-    sample_i['log(g)_a'] = numpyro.sample("log(g)_a",
-                                          distfn.Uniform(min(isologg),
-                                                         max(isologg)))
+    sample_i['Teff_a'] = numpyro.sample("Teff_a", distfn.Uniform(jnp.min(isoTeff), jnp.max(isoTeff)))
+    sample_i['log(g)_a'] = numpyro.sample("log(g)_a", distfn.Uniform(jnp.min(isologg), jnp.max(isologg)))
     # sample_i['Teff_a'] = numpyro.sample("Teff_a",distfn.Uniform(2500.0, 10000.0))
 
 
@@ -158,11 +155,7 @@ def model_specphot(
     # grab secondary mass, Teff, and log(g) from MIST isochrone,
     # primary mass, and mass ratio
     # def find_closest_teff_logg(mass_a, q, isoTeff, isologg, isoinitmass):
-    (mass_b, teff_b, logg_b) = find_closest_teff_logg(mass_a,
-                                                      sample_i['mass_ratio'],
-                                                      isoTeff,
-                                                      isologg,
-                                                      isoinitmass)
+    (mass_b, teff_b, logg_b) = find_closest_teff_logg(mass_a, sample_i['mass_ratio'], isoTeff, isologg, isoinitmass)
     
     # output the quantities we found here to the sample_i dict
     sample_i['M_a'] = numpyro.deterministic("M_a", mass_a)
