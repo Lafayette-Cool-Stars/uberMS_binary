@@ -1,6 +1,9 @@
+import jax
 import jax.numpy as jnp
 from jax import lax
 from jax.scipy.special import logsumexp
+jax.config.update("jax_debug_nans", True)
+
 import numpy as np
 
 import numpyro

@@ -5,6 +5,8 @@ from numpyro.diagnostics import print_summary
 from jax import jit, jacfwd #,lax
 from jax import random as jrandom
 import jax.numpy as jnp
+import jax
+jax.config.update("jax_debug_nans", True)
 
 from optax import exponential_decay
 

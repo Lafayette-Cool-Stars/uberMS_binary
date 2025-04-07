@@ -4,6 +4,8 @@ from numpyro.distributions import constraints
 from numpyro.contrib.control_flow import cond
 
 import jax.numpy as jnp
+import jax
+jax.config.update("jax_debug_nans", True)
 
 from .priors import determineprior, defaultprior
 
