@@ -3,8 +3,8 @@ from .advancedpriors import IMF_Prior,Gal_Prior
 import numpyro
 import numpyro.distributions as distfn
 import jax.numpy as jnp
-import jax
-jax.config.update("jax_debug_nans", True)
+#import jax
+#jax.config.update("jax_debug_nans", True)
 
 def defaultprior(parname):
     # define defaults for sampled parameters

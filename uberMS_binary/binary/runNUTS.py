@@ -4,8 +4,8 @@ from numpyro.infer import MCMC, NUTS,initialization
 from jax import jit,lax,jacfwd
 from jax import random as jrandom
 import jax.numpy as jnp
-import jax
-jax.config.update("jax_debug_nans", True)
+#import jax
+#jax.config.update("jax_debug_nans", True)
 
 from misty.predict import GenModJax as GenMIST
 from Payne.jax.genmod import GenMod
