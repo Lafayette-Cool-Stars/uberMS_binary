@@ -126,7 +126,7 @@ def determineprior(parname, priorinfo, *args):
     if 'q_vr' == parname:
         if priorinfo[0] == 'Milliman2014':
             mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(1e-6, 1.0))
-            vradsys = numpyro.sample("vrad_sys", distfn.Normal(-2.45, 1.02))
+            vradsys = numpyro.sample("vrad_sys", distfn.Normal(2.45, 1.02))
             vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
         
             vradb = numpyro.deterministic("vrad_b",
