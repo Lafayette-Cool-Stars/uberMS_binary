@@ -80,11 +80,14 @@ def model_specphot(
     # sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(sample_i['log(g)_a'],5.5))
     sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(0.0,5.5))
     
-    (sample_i['mass_ratio'],
-     sample_i['vrad_sys'], 
-     sample_i['vrad_a'],
-     sample_i['vrad_b']) = determineprior(parname='q_vr',
-                                          priorinfo=priors['q_vr'])
+    #(sample_i['mass_ratio'],
+    # sample_i['vrad_sys'], 
+    # sample_i['vrad_a'],
+    # sample_i['vrad_b']) = determineprior(parname='q_vr',
+    #                                      priorinfo=priors['q_vr'])
+    sample_i['vrad_a'] = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
+    sample_i['vrad_b'] = numpyro.sample("vrad_b", distfn.Uniform(-500.0, 500.0))
+
 
     # require that |vrad_a - vrad_b| > 1.0
     # mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
@@ -180,11 +183,19 @@ def model_specphot(
     photsig = jnp.sqrt( (photobserr**2.0) + (sample_i['photjitter']**2.0) )
 
     # make photometry prediction
+    #breakpoint()
+    print(f'filters in filt array right before making photmod_a:\n{filtarray}')
     photpars_a = ([
         sample_i['Teff_a'],sample_i['log(g)_a'],sample_i['[Fe/H]_a'],sample_i['[a/Fe]_a'],
         sample_i['log(R)_a'],sample_i['dist'],sample_i['Av'],3.1])
     photmod_a = genphotfn(photpars_a)
-    photmod_a = [photmod_a[xx] for xx in filtarray]
+    photmod_b = [photmod_b[xx] for xx in filtarray]
+    # so this doesn't work because if it encounters a keyerror, it just doesn't properly redo photmod_a
+    #for xx in filtarray:
+    #    try:
+    #        photmod_a[xx] = photmod_a[xx] for xx in filtarray]
+    #    except KeyError:
+    #        print(f'photmod_a failed on filter {xx}')
 
     photpars_b = ([
         sample_i['Teff_b'],sample_i['log(g)_b'],sample_i['[Fe/H]_b'],sample_i['[a/Fe]_b'],
@@ -192,12 +203,29 @@ def model_specphot(
     photmod_b = genphotfn(photpars_b)
     photmod_b = [photmod_b[xx] for xx in filtarray]
 
+    #try:
+    #    photmod_b = [photmod_b[xx] for xx in filtarray]
+    #except KeyError:
+    #    print(f'photmod_a failed on filter {xx}')
+    #    pass
+    print(f'\n\nphotmod_a ({type(photmod_a)}):\n{photmod_a}')
+    print(f'\n\nphotmod_b ({type(photmod_b)}):\n{photmod_b}')
+
+    for i, j in zip(photmod_a, photmod_b):
+        print(f"here is i, j in photmod_a, b:")
+        print(i, j)
+        
+
     photmod_est = (
-        [-2.5 * jnp.log10( 10.0**(-0.4 * m_a) + 10.0**(-0.4 * m_b) )
+        [-2.5 * jnp.log10( 10.0**(-0.4 * photmod_a[m_a]) + 10.0**(-0.4 * photmod_b[m_b]) )
          for m_a,m_b in zip(photmod_a,photmod_b)
          ] 
     )
+
     photmod_est = jnp.asarray(photmod_est)
+    print('\nphotmod_est:')
+    print(photmod_est)
+
 
     # calculate likelihood of photometry
     numpyro.sample("photobs",distfn.Normal(photmod_est, photsig), obs=photobs)
@@ -409,6 +437,7 @@ def model_phot(
          for m_a,m_b in zip(photmod_a,photmod_b)
          ] 
     )
+    
     photmod_est = jnp.asarray(photmod_est)
 
     # calculate likelihood of photometry
