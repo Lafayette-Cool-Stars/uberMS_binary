@@ -36,18 +36,18 @@ class sviMS(object):
         # set if to use dEEP/dAge grad
         self.gradbool = kwargs.get('usegrad',False)
 
-        # for legacy, keep the NNtype
+        # set type of NN
         self.NNtype = kwargs.get('NNtype','LinNet')
 
         # for the new specNN and photNN
-        self.sNNtype = kwargs.get('sNNtype',None)
-        self.pNNtype = kwargs.get('pNNtype',None)
+        # self.sNNtype = kwargs.get('sNNtype',None)
+        # self.pNNtype = kwargs.get('pNNtype',None)
 
         # if user did not use the new specNN and photNN
-        if self.sNNtype is None:
-            self.sNNtype = self.NNtype
-        if self.pNNtype is None:
-            self.pNNtype = self.NNtype
+        # if self.sNNtype is None:
+        #     self.sNNtype = self.NNtype
+        # if self.pNNtype is None:
+        #     self.pNNtype = self.NNtype
 
         self.rng_key = jrandom.PRNGKey(0)
 
@@ -79,7 +79,7 @@ class sviMS(object):
             GM._initspecnn(
                 nnpath=self.specNN[ii],
                 Cnnpath=contNN_i,
-                NNtype=self.sNNtype)
+                NNtype=self.NNtype)
             genspecfn_i = jit(GM.genspec)
             self.genspecfn.append(genspecfn_i)
             specNN_labels = GM.PP.modpars
@@ -91,8 +91,8 @@ class sviMS(object):
         if self.photNN is not None:
             GM._initphotnn(
                 None,
-                nnpath=self.photNN,
-                NNtype=self.pNNtype)
+                nnpath=self.photNN)
+                # NNtype=self.pNNtype)
             self.genphotfn = jit(GM.genphot)
         else:
             self.genphotfn = None

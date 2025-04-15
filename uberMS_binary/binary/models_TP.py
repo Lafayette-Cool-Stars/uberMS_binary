@@ -183,13 +183,13 @@ def model_specphot(
     photsig = jnp.sqrt( (photobserr**2.0) + (sample_i['photjitter']**2.0) )
 
     # make photometry prediction
-    #breakpoint()
-    print(f'filters in filt array right before making photmod_a:\n{filtarray}')
+    # breakpoint()
+    # print(f'filters in filt array right before making photmod_a:\n{filtarray}')
     photpars_a = ([
         sample_i['Teff_a'],sample_i['log(g)_a'],sample_i['[Fe/H]_a'],sample_i['[a/Fe]_a'],
         sample_i['log(R)_a'],sample_i['dist'],sample_i['Av'],3.1])
     photmod_a = genphotfn(photpars_a)
-    photmod_b = [photmod_b[xx] for xx in filtarray]
+    photmod_a = [photmod_a[xx] for xx in filtarray]
     # so this doesn't work because if it encounters a keyerror, it just doesn't properly redo photmod_a
     #for xx in filtarray:
     #    try:
@@ -208,23 +208,22 @@ def model_specphot(
     #except KeyError:
     #    print(f'photmod_a failed on filter {xx}')
     #    pass
-    print(f'\n\nphotmod_a ({type(photmod_a)}):\n{photmod_a}')
-    print(f'\n\nphotmod_b ({type(photmod_b)}):\n{photmod_b}')
+    # print(f'\n\nphotmod_a ({type(photmod_a)}):\n{photmod_a}')
+    # print(f'\n\nphotmod_b ({type(photmod_b)}):\n{photmod_b}')
 
-    for i, j in zip(photmod_a, photmod_b):
-        print(f"here is i, j in photmod_a, b:")
-        print(i, j)
+    #for i, j in zip(photmod_a, photmod_b):
+    #    print(f"here is i, j in photmod_a, b:")
+    #    print(i, j)
         
 
     photmod_est = (
-        [-2.5 * jnp.log10( 10.0**(-0.4 * photmod_a[m_a]) + 10.0**(-0.4 * photmod_b[m_b]) )
-         for m_a,m_b in zip(photmod_a,photmod_b)
-         ] 
-    )
+            [-2.5 * jnp.log10( 10.0**(-0.4 * m_a) + 10.0**(-0.4 * m_b) )
+            for m_a,m_b in zip(photmod_a,photmod_b)]
+            )
 
     photmod_est = jnp.asarray(photmod_est)
-    print('\nphotmod_est:')
-    print(photmod_est)
+    #print('\nphotmod_est:')
+    #print(photmod_est)
 
 
     # calculate likelihood of photometry
