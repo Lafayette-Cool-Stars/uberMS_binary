@@ -452,9 +452,10 @@ class sviTP(object):
             **modelkw,
             progress_bar=settings.get('progress_bar',True),
             )
-
+        # breakpoint()
         # reconstruct the posterior
         params = svi.get_params(svi_result.state)
+        # breakpoint()
         posterior = guide.sample_posterior(
             self.rng_key, 
             params, 
@@ -462,10 +463,10 @@ class sviTP(object):
             )
         if self.verbose:
             print_summary({k: v for k, v in posterior.items() if k != "mu"}, 0.89, False)
-
+        # breakpoint()
         # write posterior samples to an astropy table
         outtable = Table(posterior)
-
+        # breakpoint()
         # write out the samples to a file
         outfile = indict['outfile']
         outtable.write(outfile,format='fits',overwrite=True)
