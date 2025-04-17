@@ -142,9 +142,6 @@ def determineprior(parname, priorinfo, *args):
                                 vradsys - (vrada - vradsys)/(mass_ratio))
 
             return (mass_ratio, vradsys, vrada, vradb)
-    
-    if 'vrad' in parname:
-        return numpyro.distfn.Uniform(-500.0,500.0)      
 
     # define user defined priors
 

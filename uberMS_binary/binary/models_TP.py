@@ -52,8 +52,8 @@ def model_specphot(
         # "Teff_b",
         # "log(g)_a",
         # "log(g)_b",
-        #"vrad_a",
-        #"vrad_b",
+        "vrad_a",
+        "vrad_b",
         #'vrad_sys',
         "vstar_a",
         "vstar_b",
@@ -73,7 +73,7 @@ def model_specphot(
 
     # define the primary as the hotter of the two stars
     sample_i['Teff_a'] = numpyro.sample("Teff_a",distfn.Uniform(2500.0, 10000.0))
-    sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, sample_i['Teff_a']+250.0))
+    sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, sample_i['Teff_a']))
     # sample_i['Teff_b'] = numpyro.sample("Teff_b",distfn.Uniform(2500.0, 10000.0))
 
     sample_i['log(g)_a'] = numpyro.sample("log(g)_a",distfn.Uniform(0.0, 5.5))
@@ -85,8 +85,8 @@ def model_specphot(
     # sample_i['vrad_a'],
     # sample_i['vrad_b']) = determineprior(parname='q_vr',
     #                                      priorinfo=priors['q_vr'])
-    sample_i['vrad_a'] = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
-    sample_i['vrad_b'] = numpyro.sample("vrad_b", distfn.Uniform(-500.0, 500.0))
+    # sample_i['vrad_a'] = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
+    # sample_i['vrad_b'] = numpyro.sample("vrad_b", distfn.Uniform(-500.0, 500.0))
 
 
     # require that |vrad_a - vrad_b| > 1.0

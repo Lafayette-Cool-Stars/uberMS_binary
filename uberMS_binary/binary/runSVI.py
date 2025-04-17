@@ -175,7 +175,6 @@ class sviMS(object):
             phot_in    = jnp.asarray([data['phot'][xx][0] for xx in filterarray],dtype=float)
             photerr_in = jnp.asarray([data['phot'][xx][1] for xx in filterarray],dtype=float)
 
-            print(f'in runsvi.py, here is the filtarray, which comes from data[phot].keys: {filterarray}')
         else:
             filterarray = []
             phot_in    = None
