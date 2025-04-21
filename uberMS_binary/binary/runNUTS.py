@@ -5,8 +5,8 @@ from jax import jit,lax,jacfwd
 from jax import random as jrandom
 import jax.numpy as jnp
 import jax
-jax.config.update("jax_disable_jit", True)
-# jax.config.update("jax_debug_nans", True)
+# jax.config.update("jax_disable_jit", True)
+jax.config.update("jax_debug_nans", True)
 
 from misty.predict import GenModJax as GenMIST
 from Payne.jax.genmod import GenMod

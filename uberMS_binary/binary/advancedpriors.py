@@ -2,8 +2,8 @@ import jax.numpy as jnp
 from jax import lax
 from jax.scipy.special import logsumexp
 import jax
-jax.config.update("jax_disable_jit", True)
-# jax.config.update("jax_debug_nans", True)
+# jax.config.update("jax_disable_jit", True)
+jax.config.update("jax_debug_nans", True)
 
 import numpy as np
 

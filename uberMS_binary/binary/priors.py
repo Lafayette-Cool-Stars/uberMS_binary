@@ -4,8 +4,8 @@ import numpyro
 import numpyro.distributions as distfn
 import jax.numpy as jnp
 import jax
-jax.config.update("jax_disable_jit", True)
-# jax.config.update("jax_debug_nans", True)
+# jax.config.update("jax_disable_jit", True)
+jax.config.update("jax_debug_nans", True)
 
 def defaultprior(parname):
     # define defaults for sampled parameters
