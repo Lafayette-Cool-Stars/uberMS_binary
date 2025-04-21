@@ -3,8 +3,9 @@ from .advancedpriors import IMF_Prior,Gal_Prior
 import numpyro
 import numpyro.distributions as distfn
 import jax.numpy as jnp
-#import jax
-#jax.config.update("jax_debug_nans", True)
+import jax
+jax.config.update("jax_disable_jit", True)
+# jax.config.update("jax_debug_nans", True)
 
 def defaultprior(parname):
     # define defaults for sampled parameters
@@ -125,7 +126,7 @@ def determineprior(parname, priorinfo, *args):
     # normal instead of uniform
     if 'q_vr' == parname:
         if priorinfo[0] == 'Milliman2014':
-            mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(1e-6, 1.0))
+            mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(0.01, 1.0))
             vradsys = numpyro.sample("vrad_sys", distfn.Normal(2.45, 1.02))
             vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
         
@@ -134,12 +135,10 @@ def determineprior(parname, priorinfo, *args):
             
             return (mass_ratio, vradsys, vrada, vradb)
         else:
-            mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(1e-6, 1.0))
+            mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(0.01, 1.0))
             vradsys = numpyro.sample("vrad_sys", distfn.Uniform(-500.0, 500.0))
             vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
-        
-            vradb = numpyro.deterministic("vrad_b",
-                                vradsys - (vrada - vradsys)/(mass_ratio))
+            vradb = numpyro.sample("vrad_b", distfn.Uniform(-500.0, 500.0))
 
             return (mass_ratio, vradsys, vrada, vradb)
 

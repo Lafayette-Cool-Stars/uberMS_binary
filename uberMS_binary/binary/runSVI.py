@@ -5,8 +5,9 @@ from numpyro.diagnostics import print_summary
 from jax import jit, jacfwd #,lax
 from jax import random as jrandom
 import jax.numpy as jnp
-#import jax
-#jax.config.update("jax_debug_nans", True)
+import jax
+jax.config.update('jax_disable_jit', True)
+# jax.config.update("jax_debug_nans", True)
 
 from optax import exponential_decay
 
@@ -441,10 +442,11 @@ class sviTP(object):
 
         # loss = Trace_ELBO()
         loss = RenyiELBO()
+        # breakpoint()
         
         # build SVI object
         svi = SVI(model, guide, optimizer, loss=loss)
-
+        # breakpoint()
         # run the SVI
         svi_result = svi.run(
             self.rng_key, 

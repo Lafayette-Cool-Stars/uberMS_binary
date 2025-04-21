@@ -3,9 +3,11 @@ import numpyro.distributions as distfn
 from numpyro.distributions import constraints
 from numpyro.contrib.control_flow import cond
 
-#import jax
 import jax.numpy as jnp
-#jax.config.update("jax_debug_nans", True)
+from jax.config import config
+import jax
+jax.config.update('jax_disable_jit', True)
+# jax.config.update("jax_debug_nans", True)
 
 from .priors import determineprior, defaultprior
 

@@ -4,8 +4,9 @@ from numpyro.distributions import constraints
 from numpyro.contrib.control_flow import cond
 
 import jax.numpy as jnp
-#import jax
-#jax.config.update("jax_debug_nans", True)
+import jax
+jax.config.update("jax_disable_jit", True)
+# jax.config.update("jax_debug_nans", True)
 
 from .priors import determineprior, defaultprior
 
@@ -85,6 +86,7 @@ def model_specphot(
      sample_i['vrad_a'],
      sample_i['vrad_b']) = determineprior(parname='q_vr',
                                           priorinfo=priors['q_vr'])
+    # breakpoint()
 
 
     # require that |vrad_a - vrad_b| > 1.0
