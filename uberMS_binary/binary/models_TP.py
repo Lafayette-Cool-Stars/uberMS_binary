@@ -157,14 +157,22 @@ def model_specphot(
         sample_i['vrad_a'],sample_i['vstar_a'],sample_i['vmic_a'],sample_i['lsf']])
 
     specpars_a += [sample_i['pc{0}'.format(x)] for x in range(len(pcterms))]
-    specmod_a = genspecfn(specpars_a,outwave=specwave,modpoly=True)
+    try:
+        specmod_a = genspecfn(specpars_a,outwave=specwave,modpoly=True)
+    except FloatingPointError:
+        print(f"NaN produced when attempting to generate specmod_a. Current samples: {sample_i}")
+        raise
     specmod_a = jnp.asarray(specmod_a[1])
 
     specpars_b = ([
         sample_i['Teff_b'],sample_i['log(g)_b'],sample_i['[Fe/H]_b'],sample_i['[a/Fe]_b'],
         sample_i['vrad_b'],sample_i['vstar_b'],sample_i['vmic_b'],sample_i['lsf']])
     specpars_b += [1.0,0.0]
-    specmod_b = genspecfn(specpars_b,outwave=specwave,modpoly=True)
+    try:
+        specmod_b = genspecfn(specpars_b,outwave=specwave,modpoly=True)
+    except FloatingPointError:
+        print(f"NaN produced when attempting to generate specmod_b. Current samples: {sample_i}")
+        raise
     specmod_b = jnp.asarray(specmod_b[1])
 
     radius_a = 10.0**sample_i['log(R)_a']
@@ -174,7 +182,11 @@ def model_specphot(
         (planck(specwave,sample_i['Teff_a']) * radius_a**2.0) / 
         (planck(specwave,sample_i['Teff_b']) * radius_b**2.0)
          )
-    specmod_est = (specmod_a + R * specmod_b) / (1.0 + R)
+    try:
+        specmod_est = (specmod_a + R * specmod_b) / (1.0 + R)
+    except FloatingPointError:
+        print(f"NaN produced when attempting to generate specmod_est. Current samples: {sample_i}")
+        raise
 
     # calculate likelihood for spectrum
     numpyro.sample("specobs",distfn.Normal(specmod_est, specsig), obs=specobs)
