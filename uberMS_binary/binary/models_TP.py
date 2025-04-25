@@ -61,7 +61,7 @@ def model_specphot(
         'log(R)_b',
         #'mass_ratio',
         "dist",
-        "Av"
+        "Av",
         ])
 
     sample_i = {}
