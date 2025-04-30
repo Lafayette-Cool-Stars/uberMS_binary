@@ -284,12 +284,12 @@ def model_spec(
     sample_i['log(g)_b'] = numpyro.sample("log(g)_b",distfn.Uniform(0.0,5.5))
 
     # require that |vrad_a - vrad_b| > 1.0
-    # mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
-    # component_dists = ([
-    #     distfn.Uniform(sample_i['vrad_a']-100.0,sample_i['vrad_a']-1.0,),
-    #     distfn.Uniform(sample_i['vrad_a']+1.0,sample_i['vrad_a']+100.0,),
-    #     ])
-    # sample_i['vrad_b'] = numpyro.sample('vrad_b',distfn.MixtureGeneral(mixing_dist, component_dists))
+    mixing_dist = distfn.Categorical(probs=jnp.ones(2) / 2.)
+    component_dists = ([
+        distfn.Uniform(sample_i['vrad_a']-100.0,sample_i['vrad_a']-1.0,),
+        distfn.Uniform(sample_i['vrad_a']+1.0,sample_i['vrad_a']+100.0,),
+        ])
+    sample_i['vrad_b'] = numpyro.sample('vrad_b',distfn.MixtureGeneral(mixing_dist, component_dists))
     
     # figure out if user defines extra pc terms in priors
     # or should use the default pc0-pc3 terms
