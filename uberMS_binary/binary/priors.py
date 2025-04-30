@@ -120,27 +120,44 @@ def determineprior(parname, priorinfo, *args):
     # handle vrads and mass ratio
     # Based on the equation q = (v_a - vrad_sys) / (vrad_sys - v_b),
     # which can be solved v_b to give: v_b = vrad_sys - (v_a - vrad_sys)/q
-
-    # Keeping vrad_sys as just a uniform prior between +/- 500 km/s for now
-    # TODO: Figure out where to put in a user-defined flag to make vrad_sys
-    # normal instead of uniform
     if 'q_vr' == parname:
-        if priorinfo[0] == 'Milliman2014':
-            mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(0.01, 1.0))
-            vradsys = numpyro.sample("vrad_sys", distfn.Normal(2.45, 1.02))
-            vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
-        
-            vradb = numpyro.deterministic("vrad_b",
-                                vradsys - (vrada - vradsys)/(mass_ratio))
-            
-            return (mass_ratio, vradsys, vrada, vradb)
-        else:
+        if priorinfo[0] == 'independent':
             mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(0.01, 1.0))
             vradsys = numpyro.sample("vrad_sys", distfn.Uniform(-500.0, 500.0))
             vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
             vradb = numpyro.sample("vrad_b", distfn.Uniform(-500.0, 500.0))
 
             return (mass_ratio, vradsys, vrada, vradb)
+
+        if priorinfo[0] == 'RelaxedMilliman2014':
+            mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(0.01, 1.0))
+            vradsys = numpyro.sample("vrad_sys", distfn.Normal(2.45-11.19, 1.02*5.0))
+            vrada = numpyro.sample("vrad_a", distfn.Uniform(-100.0, 100.0))
+
+            vradb = numpyro.deterministic("vrad_b",
+                                vradsys - (vrada - vradsys)/(mass_ratio))
+
+            return (mass_ratio, vradsys, vrada, vradb)
+
+        elif priorinfo[0] == 'Milliman2014':
+            mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(0.01, 1.0))
+            vradsys = numpyro.sample("vrad_sys", distfn.Normal(2.45, 1.02))
+            vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
+
+            vradb = numpyro.deterministic("vrad_b",
+                                vradsys - (vrada - vradsys)/(mass_ratio))
+
+            return (mass_ratio, vradsys, vrada, vradb)
+        else:
+            mass_ratio = numpyro.sample("mass_ratio", distfn.Uniform(0.01, 1.0))
+            vradsys = numpyro.sample("vrad_sys", distfn.Uniform(-500.0, 500.0))
+            vrada = numpyro.sample("vrad_a", distfn.Uniform(-500.0, 500.0))
+
+            vradb = numpyro.deterministic("vrad_b",
+                                vradsys - (vrada - vradsys)/(mass_ratio))
+
+            return (mass_ratio, vradsys, vrada, vradb)
+
 
     # define user defined priors
 
